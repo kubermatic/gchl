@@ -1,0 +1,2 @@
+# gchl
+Github changelog generator
