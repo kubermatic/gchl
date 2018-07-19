@@ -12,9 +12,7 @@ func Render(ctx *cli.Context, changelog *git.Changelog) {
 	t := template.New("Changelog")
 	t.Parse(
 		`
-# Change Log
-
-## [{{.Version}}]({{.RepositoryURL}})
+### [{{.Version}}]({{.RepositoryURL}})
 
 **Merged pull requests:**
 
