@@ -96,7 +96,7 @@ func hasReleaseNotes(message string) bool {
 	body := strings.Replace(message, "```", "___", -1)
 
 	// Special case: check if pr message release notes field with content NONE, return false
-	regex := `___release-note(.*\n[NnOoNnEe.*]*?\n)___`
+	regex := `___release-note(.*\n((?i)none.*)*?\n)___`
 	if matched, _ := regexp.MatchString(regex, body); matched == true {
 		return false
 	}
