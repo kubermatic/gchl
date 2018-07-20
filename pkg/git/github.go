@@ -60,7 +60,7 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 				if hasReleaseNotes(issue.GetBody()) {
 					item.Author = issue.GetUser().GetLogin()
 					item.AuthorURL = fmt.Sprintf("https://github.com/%v", issue.GetUser().GetLogin())
-					item.Text = filter(issue)
+					item.Text = filter(issue.GetBody())
 					item.IssueURL = fmt.Sprintf("https://github.com/%v/%v/issues/%v", api.User, api.Repository, id)
 
 					commits = append(commits, item)
@@ -78,17 +78,30 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 	return commits, nil
 }
 
-// filter filters an issue message.
-func filter(issue *gh.Issue) string {
-	body := strings.Replace(issue.GetBody(), "```", "___", 0)
-	regex := `___release-notes(.*\n[\s\S]*?\n)___`
+func filter(message string) string {
+	body := strings.Replace(message, "```", "___", -1)
+	regex := `___release-note(.*\n[\s\S]*?\n)___`
 	parser := regexp.MustCompile(regex)
-	return parser.FindString(body)
+
+	// get matching group
+	text := parser.FindStringSubmatch(body)[1]
+
+	// replace linebreaks
+	parser = regexp.MustCompile(`\r?\n`)
+	text = parser.ReplaceAllString(text, "")
+	return text
 }
 
-func hasReleaseNotes(text string) bool {
-	body := strings.Replace(text, "```", "___", 0)
-	regex := `___release-notes(.*\n[\s\S]*?\n)___`
+func hasReleaseNotes(message string) bool {
+	body := strings.Replace(message, "```", "___", -1)
+
+	// Special case: check if pr message release notes field with content NONE, return false
+	regex := `___release-note(.*\n[NnOoNnEe.*]*?\n)___`
+	if matched, _ := regexp.MatchString(regex, body); matched == true {
+		return false
+	}
+
+	regex = `___release-note(.*\n[\s\S]*?\n)___`
 	matched, _ := regexp.MatchString(regex, body)
 	return matched
 }
