@@ -15,7 +15,7 @@ type (
 
 	// Git holds information about the local repository
 	Git struct {
-		repo *git.Repository
+		Repo *git.Repository
 	}
 
 	// Changelog represents the changelog
@@ -39,7 +39,7 @@ type (
 // New returns a new local git client
 func New(path string) *Git {
 	return &Git{
-		repo: open(path),
+		Repo: open(path),
 	}
 }
 
@@ -52,8 +52,18 @@ func open(path string) *git.Repository {
 	return repository
 }
 
-func (g *Git) getHashByTagName(tagName string) (*plumbing.Reference, error) {
-	tags, err := g.repo.Tags()
+func (g *Git) getHashObject(hash string) (*plumbing.Reference, error) {
+	_, err := g.Repo.CommitObject(plumbing.NewHash(hash))
+	if err != nil {
+		return nil, err
+	}
+
+	reference := plumbing.NewReferenceFromStrings("tempRef", hash)
+	return reference, nil
+}
+
+func (g *Git) getHashObjectByTagName(tagName string) (*plumbing.Reference, error) {
+	tags, err := g.Repo.Tags()
 	if err != nil {
 		return nil, err
 	}
@@ -76,17 +86,20 @@ func (g *Git) getHashByTagName(tagName string) (*plumbing.Reference, error) {
 // GetReference returns a reference for a given name (e.g. tag name or branch name)
 func (g *Git) GetReference(name string) (*plumbing.Reference, error) {
 	var result *plumbing.Reference
-	if result, _ = g.getHashByTagName(name); result != nil {
+	if result, _ = g.getHashObject(name); result != nil {
 		return result, nil
 	}
-	if result, _ = g.getHashByBranchName(name); result != nil {
+	if result, _ = g.getHashObjectByTagName(name); result != nil {
+		return result, nil
+	}
+	if result, _ = g.getHashObjectByBranchName(name); result != nil {
 		return result, nil
 	}
 	return result, errors.Errorf("Failed to find tag or branch name: %v", name)
 }
 
-func (g *Git) getHashByBranchName(branchName string) (*plumbing.Reference, error) {
-	branches, err := g.repo.Branches()
+func (g *Git) getHashObjectByBranchName(branchName string) (*plumbing.Reference, error) {
+	branches, err := g.Repo.Branches()
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +124,7 @@ func (g *Git) GetCommitsBetween(from *plumbing.Reference, to *plumbing.Reference
 	var history []*ChangelogItem
 	var exists bool
 
-	commits, err := g.repo.Log(&git.LogOptions{From: from.Hash()})
+	commits, err := g.Repo.Log(&git.LogOptions{From: from.Hash()})
 	if err != nil {
 		return history, err
 	}
@@ -149,12 +162,12 @@ func (g *Git) GetCommitsSince(to *plumbing.Reference) ([]*ChangelogItem, error) 
 	var history []*ChangelogItem
 	var exists bool
 
-	ref, err := g.repo.Head()
+	ref, err := g.Repo.Head()
 	if err != nil {
 		return history, err
 	}
 
-	commits, err := g.repo.Log(&git.LogOptions{From: ref.Hash()})
+	commits, err := g.Repo.Log(&git.LogOptions{From: ref.Hash()})
 	if err != nil {
 		return history, err
 	}
@@ -215,7 +228,7 @@ func (g *Git) GetRemoteCredentials(c *cli.Context) (string, string, string, erro
 		return user, repo, c.GlobalString("token"), err
 	}
 
-	remotes, err := g.repo.Remotes()
+	remotes, err := g.Repo.Remotes()
 	if err != nil {
 		return "", "", "", err
 	}
