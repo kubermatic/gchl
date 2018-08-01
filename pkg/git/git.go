@@ -58,7 +58,7 @@ func (g *Git) getHashObject(hash string) (*plumbing.Reference, error) {
 		return nil, err
 	}
 
-	reference := plumbing.NewReferenceFromStrings("tempRef", hash)
+	reference := plumbing.NewReferenceFromStrings(hash, hash)
 	return reference, nil
 }
 
@@ -95,7 +95,7 @@ func (g *Git) GetReference(name string) (*plumbing.Reference, error) {
 	if result, _ = g.getHashObjectByBranchName(name); result != nil {
 		return result, nil
 	}
-	return result, errors.Errorf("Failed to find tag or branch name: %v", name)
+	return result, errors.Errorf("Unable to find branch/tag/hash: %v", name)
 }
 
 func (g *Git) getHashObjectByBranchName(branchName string) (*plumbing.Reference, error) {
