@@ -15,7 +15,7 @@ type (
 
 	// Git holds information about the local repository
 	Git struct {
-		Repo *git.Repository
+		repo *git.Repository
 	}
 
 	// Changelog represents the changelog
@@ -39,7 +39,7 @@ type (
 // New returns a new local git client
 func New(path string) *Git {
 	return &Git{
-		Repo: open(path),
+		repo: open(path),
 	}
 }
 
@@ -53,7 +53,7 @@ func open(path string) *git.Repository {
 }
 
 func (g *Git) getHashObject(hash string) (*plumbing.Reference, error) {
-	_, err := g.Repo.CommitObject(plumbing.NewHash(hash))
+	_, err := g.repo.CommitObject(plumbing.NewHash(hash))
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (g *Git) getHashObject(hash string) (*plumbing.Reference, error) {
 }
 
 func (g *Git) getHashObjectByTagName(tagName string) (*plumbing.Reference, error) {
-	tags, err := g.Repo.Tags()
+	tags, err := g.repo.Tags()
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (g *Git) GetReference(name string) (*plumbing.Reference, error) {
 }
 
 func (g *Git) getHashObjectByBranchName(branchName string) (*plumbing.Reference, error) {
-	branches, err := g.Repo.Branches()
+	branches, err := g.repo.Branches()
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func (g *Git) GetCommitsBetween(from *plumbing.Reference, to *plumbing.Reference
 	var history []*ChangelogItem
 	var exists bool
 
-	commits, err := g.Repo.Log(&git.LogOptions{From: from.Hash()})
+	commits, err := g.repo.Log(&git.LogOptions{From: from.Hash()})
 	if err != nil {
 		return history, err
 	}
@@ -162,12 +162,12 @@ func (g *Git) GetCommitsSince(to *plumbing.Reference) ([]*ChangelogItem, error) 
 	var history []*ChangelogItem
 	var exists bool
 
-	ref, err := g.Repo.Head()
+	ref, err := g.repo.Head()
 	if err != nil {
 		return history, err
 	}
 
-	commits, err := g.Repo.Log(&git.LogOptions{From: ref.Hash()})
+	commits, err := g.repo.Log(&git.LogOptions{From: ref.Hash()})
 	if err != nil {
 		return history, err
 	}
@@ -228,7 +228,7 @@ func (g *Git) GetRemoteCredentials(c *cli.Context) (string, string, string, erro
 		return user, repo, c.GlobalString("token"), err
 	}
 
-	remotes, err := g.Repo.Remotes()
+	remotes, err := g.repo.Remotes()
 	if err != nil {
 		return "", "", "", err
 	}
