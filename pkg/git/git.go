@@ -46,7 +46,7 @@ func New(path string) *Git {
 func open(path string) *git.Repository {
 	repository, err := git.PlainOpen(path)
 	if err != nil {
-		log.Fatalf("Unable to open git repository: %v", err)
+		log.Fatalf("Unable to open git repository %s: %v", path, err)
 	}
 
 	return repository
