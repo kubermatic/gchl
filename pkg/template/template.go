@@ -19,6 +19,6 @@ func Render(ctx *cli.Context, changelog *git.Changelog) {
 {{range $.Items -}}
 - {{.Text}} [#{{.IssueID}}]({{.IssueURL}}) ([{{.Author}}]({{.AuthorURL}}))
 {{end}}
-	`)
+`)
 	t.Execute(os.Stdout, changelog)
 }
