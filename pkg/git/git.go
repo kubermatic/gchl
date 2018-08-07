@@ -46,13 +46,23 @@ func New(path string) *Git {
 func open(path string) *git.Repository {
 	repository, err := git.PlainOpen(path)
 	if err != nil {
-		log.Fatalf("Unable to open git repository: %v", err)
+		log.Fatalf("Unable to open git repository %s: %v", path, err)
 	}
 
 	return repository
 }
 
-func (g *Git) getHashByTagName(tagName string) (*plumbing.Reference, error) {
+func (g *Git) getHashObject(hash string) (*plumbing.Reference, error) {
+	_, err := g.repo.CommitObject(plumbing.NewHash(hash))
+	if err != nil {
+		return nil, err
+	}
+
+	reference := plumbing.NewReferenceFromStrings(hash, hash)
+	return reference, nil
+}
+
+func (g *Git) getHashObjectByTagName(tagName string) (*plumbing.Reference, error) {
 	tags, err := g.repo.Tags()
 	if err != nil {
 		return nil, err
@@ -76,16 +86,19 @@ func (g *Git) getHashByTagName(tagName string) (*plumbing.Reference, error) {
 // GetReference returns a reference for a given name (e.g. tag name or branch name)
 func (g *Git) GetReference(name string) (*plumbing.Reference, error) {
 	var result *plumbing.Reference
-	if result, _ = g.getHashByTagName(name); result != nil {
+	if result, _ = g.getHashObject(name); result != nil {
 		return result, nil
 	}
-	if result, _ = g.getHashByBranchName(name); result != nil {
+	if result, _ = g.getHashObjectByTagName(name); result != nil {
 		return result, nil
 	}
-	return result, errors.Errorf("Failed to find tag or branch name: %v", name)
+	if result, _ = g.getHashObjectByBranchName(name); result != nil {
+		return result, nil
+	}
+	return result, errors.Errorf("Unable to find branch/tag/hash: %v", name)
 }
 
-func (g *Git) getHashByBranchName(branchName string) (*plumbing.Reference, error) {
+func (g *Git) getHashObjectByBranchName(branchName string) (*plumbing.Reference, error) {
 	branches, err := g.repo.Branches()
 	if err != nil {
 		return nil, err
