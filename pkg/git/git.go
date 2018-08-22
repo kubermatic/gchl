@@ -195,6 +195,10 @@ func (g *Git) GetCommitsSince(to *plumbing.Reference) ([]*ChangelogItem, error) 
 		return nil
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
 	if exists {
 		return history, nil
 	}

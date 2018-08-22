@@ -36,11 +36,21 @@ This text will be visible in changelog
 '''
 ```
 
-and run 
+and run
 
 ```
 gchl between v1.2 v1.0 --release-notes
 ```
+
+The block can also contain a type of a change, which will be used to group the changes in the log, e.g.:
+
+```
+'''release-notes bugfix
+The important functionality has been fixed
+'''
+```
+
+will result in the message being grouped under `bugfix:`. Changes without a type specified will be grouped under `misc:`.
 
 ## Overview
 
@@ -70,4 +80,3 @@ GLOBAL OPTIONS:
    --help, -h                        show help      
    --version, -v                     print the version
 ```
-

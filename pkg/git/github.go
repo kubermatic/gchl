@@ -76,9 +76,11 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 				if resp.StatusCode != 404 && issue != nil && issue.IsPullRequest() {
 					if api.UseFilter {
 						if hasReleaseNotes(issue.GetBody()) {
+							text, _ := filter(issue.GetBody())
+
 							item.Author = issue.GetUser().GetLogin()
 							item.AuthorURL = fmt.Sprintf("https://github.com/%v", issue.GetUser().GetLogin())
-							item.Text = filter(issue.GetBody())
+							item.Text = text
 							item.IssueURL = fmt.Sprintf("https://github.com/%v/%v/issues/%v", api.User, api.Repository, id)
 
 							resultsChan <- item
@@ -150,18 +152,24 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 	return results, nil
 }
 
-func filter(message string) string {
+func filter(message string) (string, string) {
 	body := strings.Replace(message, "```", "___", -1)
-	regex := `___release-note(.*\n[\s\S]*?\n)___`
-	parser := regexp.MustCompile(regex)
+	regex := `___release-note(.*)(.*\n[\s\S]*?\n)___`
 
-	// get matching group
-	text := parser.FindStringSubmatch(body)[1]
+	// get matching groups
+	submatches := regexp.MustCompile(regex).FindStringSubmatch(body)
+
+	noteType := strings.ToLower(strings.TrimSpace(submatches[1]))
+	text := submatches[2]
+
+	if noteType == "" {
+		noteType = "misc"
+	}
 
 	// replace linebreaks
-	parser = regexp.MustCompile(`\r?\n`)
+	parser := regexp.MustCompile(`\r?\n`)
 	text = parser.ReplaceAllString(text, "")
-	return text
+	return text, noteType
 }
 
 func hasReleaseNotes(message string) bool {
