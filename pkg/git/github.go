@@ -3,11 +3,14 @@ package git
 import (
 	"context"
 	"fmt"
-	gh "github.com/google/go-github/github"
-	"golang.org/x/oauth2"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
+
+	gh "github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 )
 
 // GithubAPI is used to request the github api
@@ -42,40 +45,109 @@ func newClient(token string) *gh.Client {
 // If the issue is a pull request, the values from the github response will be used to create a new ChangelogItem.
 func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, error) {
 	ctx := context.Background()
-	var commits []*ChangelogItem
+	var results []*ChangelogItem
+	var errors []error
 
-	for _, item := range items {
-		id, err := strconv.Atoi(item.IssueID)
-		if err != nil {
-			return commits, err
-		}
+	maxWorkers := 10
 
-		issue, resp, err := api.Client.Issues.Get(ctx, api.User, api.Repository, id)
-		if err != nil {
-			return commits, err
-		}
+	itemsChan := make(chan *ChangelogItem)
+	resultsChan := make(chan *ChangelogItem, len(items))
+	errorsChan := make(chan error, len(items))
+	var workersWG sync.WaitGroup
+	var wg sync.WaitGroup
 
-		if resp.StatusCode != 404 && issue != nil && issue.IsPullRequest() {
-			if api.UseFilter {
-				if hasReleaseNotes(issue.GetBody()) {
-					item.Author = issue.GetUser().GetLogin()
-					item.AuthorURL = fmt.Sprintf("https://github.com/%v", issue.GetUser().GetLogin())
-					item.Text = filter(issue.GetBody())
-					item.IssueURL = fmt.Sprintf("https://github.com/%v/%v/issues/%v", api.User, api.Repository, id)
-
-					commits = append(commits, item)
+	workersWG.Add(maxWorkers)
+	for worker := 1; worker <= maxWorkers; worker++ {
+		go func() {
+			defer workersWG.Done()
+			for item := range itemsChan {
+				id, err := strconv.Atoi(item.IssueID)
+				if err != nil {
+					errorsChan <- err
+					return
 				}
-			} else {
-				item.Author = issue.GetUser().GetLogin()
-				item.AuthorURL = fmt.Sprintf("https://github.com/%v", issue.GetUser().GetLogin())
-				item.Text = issue.GetTitle()
-				item.IssueURL = fmt.Sprintf("https://github.com/%v/%v/issues/%v", api.User, api.Repository, id)
 
-				commits = append(commits, item)
+				issue, resp, err := api.Client.Issues.Get(ctx, api.User, api.Repository, id)
+				if err != nil {
+					errorsChan <- err
+					return
+				}
+
+				if resp.StatusCode != 404 && issue != nil && issue.IsPullRequest() {
+					if api.UseFilter {
+						if hasReleaseNotes(issue.GetBody()) {
+							item.Author = issue.GetUser().GetLogin()
+							item.AuthorURL = fmt.Sprintf("https://github.com/%v", issue.GetUser().GetLogin())
+							item.Text = filter(issue.GetBody())
+							item.IssueURL = fmt.Sprintf("https://github.com/%v/%v/issues/%v", api.User, api.Repository, id)
+
+							resultsChan <- item
+						}
+					} else {
+						item.Author = issue.GetUser().GetLogin()
+						item.AuthorURL = fmt.Sprintf("https://github.com/%v", issue.GetUser().GetLogin())
+						item.Text = issue.GetTitle()
+						item.IssueURL = fmt.Sprintf("https://github.com/%v/%v/issues/%v", api.User, api.Repository, id)
+
+						resultsChan <- item
+					}
+				}
 			}
-		}
+		}()
 	}
-	return commits, nil
+
+	// close the result/error channels after the workers are done
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		workersWG.Wait()
+		close(resultsChan)
+		close(errorsChan)
+	}()
+
+	// stream the jobs to the workers
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for _, item := range items {
+			itemsChan <- item
+		}
+		close(itemsChan)
+	}()
+
+	// collect results
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for result := range resultsChan {
+			results = append(results, result)
+		}
+	}()
+
+	// collect errors
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for err := range errorsChan {
+			errors = append(errors, err)
+		}
+	}()
+
+	wg.Wait()
+
+	if len(errors) > 0 {
+		var s string
+		for _, err := range errors {
+			s += fmt.Sprintf("%v\n", err)
+		}
+		return nil, fmt.Errorf(s)
+	}
+
+	sort.Slice(results, func(i int, j int) bool {
+		return sort.StringsAreSorted([]string{results[i].IssueID, results[j].IssueID})
+	})
+
+	return results, nil
 }
 
 func filter(message string) string {

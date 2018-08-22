@@ -1,14 +1,15 @@
 package git
 
 import (
+	"log"
+	"regexp"
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
-	"log"
-	"regexp"
-	"strings"
 )
 
 type (
@@ -243,13 +244,22 @@ func (g *Git) GetRemoteCredentials(c *cli.Context) (string, string, string, erro
 }
 
 func parseRemoteString(remoteURL string) (string, string, error) {
+	// ssh://git@github.com/kubermatic/kubermatic
+	if strings.HasPrefix(remoteURL, "ssh://git@github.com") {
+		if strings.HasSuffix(remoteURL, ".git") {
+			remoteURL = strings.TrimSuffix(remoteURL, ".git")
+		}
+		remoteURL = strings.TrimPrefix(remoteURL, "ssh://git@github.com/")
+		credentials := strings.Split(remoteURL, "/")
+		return credentials[0], credentials[1], nil
+	}
 
 	// git@github.com:kubermatic/kubermatic.git
 	if strings.HasPrefix(remoteURL, "git@github.com") {
 		if strings.HasSuffix(remoteURL, ".git") {
 			remoteURL = strings.TrimSuffix(remoteURL, ".git")
 		}
-		remoteURL := strings.TrimPrefix(remoteURL, "git@github.com:")
+		remoteURL = strings.TrimPrefix(remoteURL, "git@github.com:")
 		credentials := strings.Split(remoteURL, "/")
 		return credentials[0], credentials[1], nil
 	}
@@ -259,7 +269,7 @@ func parseRemoteString(remoteURL string) (string, string, error) {
 		if strings.HasSuffix(remoteURL, ".git") {
 			remoteURL = strings.TrimSuffix(remoteURL, ".git")
 		}
-		remoteURL := strings.TrimPrefix(remoteURL, "https://github.com/")
+		remoteURL = strings.TrimPrefix(remoteURL, "https://github.com/")
 		credentials := strings.Split(remoteURL, "/")
 		return credentials[0], credentials[1], nil
 	}
