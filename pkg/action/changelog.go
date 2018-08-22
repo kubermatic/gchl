@@ -30,7 +30,8 @@ func (a *Action) GenerateChangelogBetween(c *cli.Context) error {
 		return err
 	}
 
-	commits, err = queryGithubAPI(user, repository, token, c.Bool("release-notes"), commits)
+	realeaseNotes := c.Bool("release-notes")
+	commits, err = queryGithubAPI(user, repository, token, realeaseNotes, commits)
 	if err != nil {
 		return err
 	}
@@ -45,7 +46,11 @@ func (a *Action) GenerateChangelogBetween(c *cli.Context) error {
 		Items:         commits,
 	}
 
-	template.Render(c, &changelog)
+	if realeaseNotes {
+		template.RenderReleaseNotes(c, &changelog)
+	} else {
+		template.Render(c, &changelog)
+	}
 	return nil
 }
 
@@ -75,7 +80,8 @@ func (a *Action) GenerateChangelogSince(c *cli.Context) error {
 		return err
 	}
 
-	commits, err = queryGithubAPI(user, repository, token, c.Bool("release-notes"), commits)
+	realeaseNotes := c.Bool("release-notes")
+	commits, err = queryGithubAPI(user, repository, token, realeaseNotes, commits)
 	if err != nil {
 		return err
 	}
@@ -90,7 +96,11 @@ func (a *Action) GenerateChangelogSince(c *cli.Context) error {
 		Items:         commits,
 	}
 
-	template.Render(c, &changelog)
+	if realeaseNotes {
+		template.RenderReleaseNotes(c, &changelog)
+	} else {
+		template.Render(c, &changelog)
+	}
 	return nil
 }
 

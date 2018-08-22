@@ -76,11 +76,12 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 				if resp.StatusCode != 404 && issue != nil && issue.IsPullRequest() {
 					if api.UseFilter {
 						if hasReleaseNotes(issue.GetBody()) {
-							text, _ := filter(issue.GetBody())
+							text, changeType := filter(issue.GetBody())
 
 							item.Author = issue.GetUser().GetLogin()
 							item.AuthorURL = fmt.Sprintf("https://github.com/%v", issue.GetUser().GetLogin())
 							item.Text = text
+							item.ChangeType = changeType
 							item.IssueURL = fmt.Sprintf("https://github.com/%v/%v/issues/%v", api.User, api.Repository, id)
 
 							resultsChan <- item
