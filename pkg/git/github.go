@@ -54,7 +54,6 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 	resultsChan := make(chan *ChangelogItem, len(items))
 	errorsChan := make(chan error, len(items))
 	var workersWG sync.WaitGroup
-	var wg sync.WaitGroup
 
 	workersWG.Add(maxWorkers)
 	for worker := 1; worker <= maxWorkers; worker++ {
@@ -98,6 +97,8 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 			}
 		}()
 	}
+
+	var wg sync.WaitGroup
 
 	// close the result/error channels after the workers are done
 	wg.Add(1)

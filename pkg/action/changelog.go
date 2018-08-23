@@ -1,6 +1,8 @@
 package action
 
 import (
+	"fmt"
+
 	"github.com/kubermatic/gchl/pkg/git"
 	"github.com/kubermatic/gchl/pkg/template"
 	"github.com/pkg/errors"
@@ -49,11 +51,17 @@ func (a *Action) GenerateChangelogBetween(c *cli.Context) error {
 		Items:         commits,
 	}
 
+	var output string
 	if realeaseNotes {
-		template.RenderReleaseNotes(c, &changelog)
+		output, err = template.RenderReleaseNotes(c, &changelog)
 	} else {
-		template.Render(c, &changelog)
+		output, err = template.Render(c, &changelog)
 	}
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(output)
 	return nil
 }
 
@@ -99,11 +107,17 @@ func (a *Action) GenerateChangelogSince(c *cli.Context) error {
 		Items:         commits,
 	}
 
+	var output string
 	if realeaseNotes {
-		template.RenderReleaseNotes(c, &changelog)
+		output, err = template.RenderReleaseNotes(c, &changelog)
 	} else {
-		template.Render(c, &changelog)
+		output, err = template.Render(c, &changelog)
 	}
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(output)
 	return nil
 }
 

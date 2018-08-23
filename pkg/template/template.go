@@ -1,8 +1,8 @@
 package template
 
 import (
+	"bytes"
 	"html/template"
-	"os"
 	"sort"
 	"strings"
 
@@ -11,7 +11,7 @@ import (
 )
 
 // Render renders the changelog as markdown to stdout
-func Render(ctx *cli.Context, changelog *git.Changelog) {
+func Render(ctx *cli.Context, changelog *git.Changelog) (string, error) {
 	t := template.New("Changelog")
 	t.Parse(
 		`
@@ -23,7 +23,9 @@ func Render(ctx *cli.Context, changelog *git.Changelog) {
 - {{.Text}} [#{{.IssueID}}]({{.IssueURL}}) ([{{.Author}}]({{.AuthorURL}}))
 {{end}}
 `)
-	t.Execute(os.Stdout, changelog)
+	var b bytes.Buffer
+	err := t.Execute(&b, changelog)
+	return b.String(), err
 }
 
 type changesByType struct {
@@ -67,7 +69,7 @@ func groupChangesByType(items []*git.ChangelogItem) []changesByType {
 }
 
 // RenderReleaseNotes renders the changelog as markdown to stdout
-func RenderReleaseNotes(ctx *cli.Context, changelog *git.Changelog) {
+func RenderReleaseNotes(ctx *cli.Context, changelog *git.Changelog) (string, error) {
 	changesGroupedByType := groupChangesByType(changelog.Items)
 
 	data := struct {
@@ -95,5 +97,7 @@ func RenderReleaseNotes(ctx *cli.Context, changelog *git.Changelog) {
 
 `)
 
-	t.Execute(os.Stdout, data)
+	var b bytes.Buffer
+	err := t.Execute(&b, data)
+	return b.String(), err
 }
