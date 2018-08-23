@@ -20,6 +20,9 @@ func (a *Action) GenerateChangelogBetween(c *cli.Context) error {
 	}
 
 	from, err := local.GetReference(c.Args().Get(0))
+	if err != nil {
+		return err
+	}
 	to, err := local.GetReference(c.Args().Get(1))
 	if err != nil {
 		return err
