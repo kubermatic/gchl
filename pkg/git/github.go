@@ -44,7 +44,8 @@ func newClient(token string) *gh.Client {
 // It will use the ChangelogItems IssueID to query the pull request.
 // If the issue is a pull request, the values from the github response will be used to create a new ChangelogItem.
 func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	var results []*ChangelogItem
 	var errors []error
 
@@ -62,12 +63,14 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 			for item := range itemsChan {
 				id, err := strconv.Atoi(item.IssueID)
 				if err != nil {
+					cancel()
 					errorsChan <- err
 					return
 				}
 
 				issue, resp, err := api.Client.Issues.Get(ctx, api.User, api.Repository, id)
 				if err != nil {
+					cancel()
 					errorsChan <- err
 					return
 				}
@@ -114,7 +117,10 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 	go func() {
 		defer wg.Done()
 		for _, item := range items {
-			itemsChan <- item
+			select {
+			case itemsChan <- item:
+			case <-ctx.Done():
+			}
 		}
 		close(itemsChan)
 	}()
@@ -133,7 +139,9 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 	go func() {
 		defer wg.Done()
 		for err := range errorsChan {
-			errors = append(errors, err)
+			if err != ctx.Err() {
+				errors = append(errors, err)
+			}
 		}
 	}()
 
