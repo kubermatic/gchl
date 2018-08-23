@@ -44,7 +44,8 @@ func newClient(token string) *gh.Client {
 // It will use the ChangelogItems IssueID to query the pull request.
 // If the issue is a pull request, the values from the github response will be used to create a new ChangelogItem.
 func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	var results []*ChangelogItem
 	var errors []error
 
@@ -54,7 +55,6 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 	resultsChan := make(chan *ChangelogItem, len(items))
 	errorsChan := make(chan error, len(items))
 	var workersWG sync.WaitGroup
-	var wg sync.WaitGroup
 
 	workersWG.Add(maxWorkers)
 	for worker := 1; worker <= maxWorkers; worker++ {
@@ -63,12 +63,14 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 			for item := range itemsChan {
 				id, err := strconv.Atoi(item.IssueID)
 				if err != nil {
+					cancel()
 					errorsChan <- err
 					return
 				}
 
 				issue, resp, err := api.Client.Issues.Get(ctx, api.User, api.Repository, id)
 				if err != nil {
+					cancel()
 					errorsChan <- err
 					return
 				}
@@ -76,9 +78,12 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 				if resp.StatusCode != 404 && issue != nil && issue.IsPullRequest() {
 					if api.UseFilter {
 						if hasReleaseNotes(issue.GetBody()) {
+							text, changeType := filter(issue.GetBody())
+
 							item.Author = issue.GetUser().GetLogin()
 							item.AuthorURL = fmt.Sprintf("https://github.com/%v", issue.GetUser().GetLogin())
-							item.Text = filter(issue.GetBody())
+							item.Text = text
+							item.ChangeType = changeType
 							item.IssueURL = fmt.Sprintf("https://github.com/%v/%v/issues/%v", api.User, api.Repository, id)
 
 							resultsChan <- item
@@ -96,6 +101,8 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 		}()
 	}
 
+	var wg sync.WaitGroup
+
 	// close the result/error channels after the workers are done
 	wg.Add(1)
 	go func() {
@@ -110,7 +117,10 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 	go func() {
 		defer wg.Done()
 		for _, item := range items {
-			itemsChan <- item
+			select {
+			case itemsChan <- item:
+			case <-ctx.Done():
+			}
 		}
 		close(itemsChan)
 	}()
@@ -129,7 +139,9 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 	go func() {
 		defer wg.Done()
 		for err := range errorsChan {
-			errors = append(errors, err)
+			if err != ctx.Err() {
+				errors = append(errors, err)
+			}
 		}
 	}()
 
@@ -150,18 +162,24 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 	return results, nil
 }
 
-func filter(message string) string {
+func filter(message string) (string, string) {
 	body := strings.Replace(message, "```", "___", -1)
-	regex := `___release-note(.*\n[\s\S]*?\n)___`
-	parser := regexp.MustCompile(regex)
+	regex := `___release-note(.*)(.*\n[\s\S]*?\n)___`
 
-	// get matching group
-	text := parser.FindStringSubmatch(body)[1]
+	// get matching groups
+	submatches := regexp.MustCompile(regex).FindStringSubmatch(body)
+
+	noteType := strings.ToLower(strings.TrimSpace(submatches[1]))
+	text := submatches[2]
+
+	if noteType == "" {
+		noteType = "misc"
+	}
 
 	// replace linebreaks
-	parser = regexp.MustCompile(`\r?\n`)
+	parser := regexp.MustCompile(`\r?\n`)
 	text = parser.ReplaceAllString(text, "")
-	return text
+	return text, noteType
 }
 
 func hasReleaseNotes(message string) bool {

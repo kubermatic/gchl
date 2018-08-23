@@ -1,6 +1,8 @@
 package action
 
 import (
+	"fmt"
+
 	"github.com/kubermatic/gchl/pkg/git"
 	"github.com/kubermatic/gchl/pkg/template"
 	"github.com/pkg/errors"
@@ -20,6 +22,9 @@ func (a *Action) GenerateChangelogBetween(c *cli.Context) error {
 	}
 
 	from, err := local.GetReference(c.Args().Get(0))
+	if err != nil {
+		return err
+	}
 	to, err := local.GetReference(c.Args().Get(1))
 	if err != nil {
 		return err
@@ -30,7 +35,8 @@ func (a *Action) GenerateChangelogBetween(c *cli.Context) error {
 		return err
 	}
 
-	commits, err = queryGithubAPI(user, repository, token, c.Bool("release-notes"), commits)
+	realeaseNotes := c.Bool("release-notes")
+	commits, err = queryGithubAPI(user, repository, token, realeaseNotes, commits)
 	if err != nil {
 		return err
 	}
@@ -45,7 +51,17 @@ func (a *Action) GenerateChangelogBetween(c *cli.Context) error {
 		Items:         commits,
 	}
 
-	template.Render(c, &changelog)
+	var output string
+	if realeaseNotes {
+		output, err = template.RenderReleaseNotes(c, &changelog)
+	} else {
+		output, err = template.Render(c, &changelog)
+	}
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(output)
 	return nil
 }
 
@@ -75,7 +91,8 @@ func (a *Action) GenerateChangelogSince(c *cli.Context) error {
 		return err
 	}
 
-	commits, err = queryGithubAPI(user, repository, token, c.Bool("release-notes"), commits)
+	realeaseNotes := c.Bool("release-notes")
+	commits, err = queryGithubAPI(user, repository, token, realeaseNotes, commits)
 	if err != nil {
 		return err
 	}
@@ -90,7 +107,17 @@ func (a *Action) GenerateChangelogSince(c *cli.Context) error {
 		Items:         commits,
 	}
 
-	template.Render(c, &changelog)
+	var output string
+	if realeaseNotes {
+		output, err = template.RenderReleaseNotes(c, &changelog)
+	} else {
+		output, err = template.Render(c, &changelog)
+	}
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(output)
 	return nil
 }
 

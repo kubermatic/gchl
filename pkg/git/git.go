@@ -28,12 +28,13 @@ type (
 
 	// ChangelogItem represents an item in the changelog
 	ChangelogItem struct {
-		Author    string
-		AuthorURL string
-		Hash      string
-		Text      string
-		IssueID   string
-		IssueURL  string
+		Author     string
+		AuthorURL  string
+		Hash       string
+		Text       string
+		IssueID    string
+		IssueURL   string
+		ChangeType string
 	}
 )
 
@@ -194,6 +195,10 @@ func (g *Git) GetCommitsSince(to *plumbing.Reference) ([]*ChangelogItem, error) 
 		}
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	if exists {
 		return history, nil
