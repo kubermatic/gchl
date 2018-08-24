@@ -14,15 +14,17 @@ go install
 You will need a github personal access token for api calls, create one [here](https://github.com/settings/tokens).
 You can pass the token to `gchl` as a flag `--token` or via env variable `GCHL_GITHUB_TOKEN`
 
-Navigate into a repository and get a Changelog of all changes in form of merged PRs between two branches / tags
+Navigate into a repository and generate a Changelog of all changes in form of merged PRs between two branches / tags / hashes
 
 ```
+gchl between [branch/tag/hash] [branch/tag/hash]
 gchl between v1.2 v1.0
 ```
 
 or since between `HEAD` and another reference
 
 ```
+gchl between [branch/tag/hash]
 gchl since v1.0
 ```
 
