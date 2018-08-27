@@ -153,6 +153,11 @@ func (g *Git) GetCommitsBetween(from *plumbing.Reference, to *plumbing.Reference
 			exists = true
 		}
 
+		// ignore merge commits
+		if len(commit.ParentHashes) > 1 {
+			return nil
+		}
+
 		if hasIssue(commit.Message) {
 			// check whether the issue is already present within the older version's history
 			if issue := getIssueFrom(commit.Message); !knownIssues[issue] {
