@@ -36,6 +36,8 @@ type (
 		IssueURL   string
 		ChangeType string
 	}
+
+	searchFunc func (hash string) (*plumbing.Reference, error)
 )
 
 // New returns a new local git client
@@ -60,8 +62,27 @@ func (g *Git) getHashObject(hash string) (*plumbing.Reference, error) {
 		return nil, err
 	}
 
-	reference := plumbing.NewReferenceFromStrings(hash, hash)
-	return reference, nil
+	result := plumbing.NewReferenceFromStrings(hash, hash)
+	return result, nil
+}
+
+func (g *Git) getHashObjectByPrefix(hash string) (*plumbing.Reference, error) {
+	commits, err := g.repo.CommitObjects()
+	if err != nil {
+		return nil, err
+	}
+
+	var result *plumbing.Reference
+	commits.ForEach(func(reference *object.Commit) error {
+		commitHash := reference.Hash.String()[0:7]
+		if commitHash == hash {
+			result = plumbing.NewReferenceFromStrings(reference.Hash.String(), reference.Hash.String())
+			return errors.New("Test")
+		}
+		return nil
+	})
+
+	return result, nil
 }
 
 func (g *Git) getHashObjectByTagName(tagName string) (*plumbing.Reference, error) {
@@ -85,18 +106,26 @@ func (g *Git) getHashObjectByTagName(tagName string) (*plumbing.Reference, error
 	return result, nil
 }
 
-// GetReference returns a reference for a given name (e.g. tag name or branch name)
+// GetReference returns a reference for a given name (e.g. tag name, branch name, hash value or hash prefix (first 7 digits))
 func (g *Git) GetReference(name string) (*plumbing.Reference, error) {
 	var result *plumbing.Reference
-	if result, _ = g.getHashObject(name); result != nil {
+
+	if result, _ := g.getHashObjectByTagName(name); result != nil {
 		return result, nil
 	}
-	if result, _ = g.getHashObjectByTagName(name); result != nil {
-		return result, nil
+	searchFunctions := []searchFunc{
+		g.getHashObject,
+		g.getHashObjectByBranchName,
+		g.getHashObjectByTagName,
+		g.getHashObjectByPrefix,
 	}
-	if result, _ = g.getHashObjectByBranchName(name); result != nil {
-		return result, nil
+
+	for _, search := range searchFunctions {
+		if result, _ = search(name); result != nil {
+			return result, nil
+		}
 	}
+
 	return result, errors.Errorf("Unable to find branch/tag/hash: %v", name)
 }
 
