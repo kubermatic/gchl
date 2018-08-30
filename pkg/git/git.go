@@ -125,32 +125,56 @@ func (g *Git) getHashObjectByBranchName(branchName string) (*plumbing.Reference,
 func (g *Git) GetCommitsBetween(from *plumbing.Reference, to *plumbing.Reference) ([]*ChangelogItem, error) {
 	var history []*ChangelogItem
 	var exists bool
+	knownIssues := make(map[string]bool)
 
-	commits, err := g.repo.Log(&git.LogOptions{From: from.Hash()})
+	olderVersionCommits, err := g.repo.Log(&git.LogOptions{From: to.Hash()})
 	if err != nil {
-		return history, err
+		return nil, err
 	}
-
-	// Iterate over all commits
-	// Break when `to` has been found
-	err = commits.ForEach(func(commit *object.Commit) error {
-		if commit.Hash == to.Hash() {
-			exists = true
-			return errors.New("ErrStop")
-		}
-
-		// Check if commit message contains issue in form `(#0..9)`
-		// and add commit as a changelog item
+	// Get a set of all shared commits
+	err = olderVersionCommits.ForEach(func(commit *object.Commit) error {
 		if hasIssue(commit.Message) {
-			history = append(history, &ChangelogItem{
-				Hash:    commit.Hash.String(),
-				Text:    commit.Message,
-				IssueID: getIssueFrom(commit.Message),
-				Author:  commit.Author.Name,
-			})
+			issue := getIssueFrom(commit.Message)
+			knownIssues[issue] = true
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	newVersionCommits, err := g.repo.Log(&git.LogOptions{From: from.Hash()})
+	if err != nil {
+		return history, err
+	}
+	err = newVersionCommits.ForEach(func(commit *object.Commit) error {
+		// check whether the old version is even within the new version's history
+		if commit.Hash == to.Hash() {
+			exists = true
+		}
+
+		// ignore merge commits
+		if len(commit.ParentHashes) > 1 {
+			return nil
+		}
+
+		if hasIssue(commit.Message) {
+			// check whether the issue is already present within the older version's history
+			if issue := getIssueFrom(commit.Message); !knownIssues[issue] {
+				history = append(history, &ChangelogItem{
+					Hash:    commit.Hash.String(),
+					Text:    commit.Message,
+					IssueID: issue,
+					Author:  commit.Author.Name,
+				})
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	if exists {
 		return history, nil
