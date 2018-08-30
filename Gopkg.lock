@@ -17,12 +17,12 @@
   version = "v1.9.0"
 
 [[projects]]
-  digest = "1:15042ad3498153684d09f393bbaec6b216c8eec6d61f63dff711de7d64ed8861"
+  digest = "1:97df918963298c287643883209a2c3f642e6593379f97ab400c2a2e219ab647d"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   pruneopts = "NUT"
-  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
-  version = "v1.1.0"
+  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
+  version = "v1.2.0"
 
 [[projects]]
   digest = "1:51bee9f1987dcdb9f9a1b4c20745d78f6bf6f5f14ad4e64ca883eb64df4c0045"
@@ -57,12 +57,12 @@
   version = "0.4"
 
 [[projects]]
-  branch = "master"
-  digest = "1:9db29b604bd78452d167abed82386ddd2f93973df3841896fb6ab8aff936f1d6"
+  digest = "1:a4df73029d2c42fabcb6b41e327d2f87e685284ec03edf76921c267d9cfc9c23"
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "3864e76763d94a6df2f9960b16a20a33da9f9a66"
+  revision = "ae18d6b8b3205b561c79e8e5f69bff09736185f4"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:cf254277d898b713195cc6b4a3fac8bf738b9f1121625df27843b52b267eec6c"
@@ -119,7 +119,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b6eb34448ef4b7997aa345f2fa8bf5f6bf274d0d2ded4f8f4ab0a42b56e65c1d"
+  digest = "1:c76f8b24a4d9b99b502fb7b61ad769125075cb570efff9b9b73e6c428629532d"
   name = "golang.org/x/crypto"
   packages = [
     "cast5",
@@ -140,7 +140,7 @@
     "ssh/knownhosts",
   ]
   pruneopts = "NUT"
-  revision = "c126467f60eb25f8f27e5a981f32a87e3965053f"
+  revision = "614d502a4dac94afa3a6ce146bd1736da82514c6"
 
 [[projects]]
   branch = "master"
@@ -151,18 +151,26 @@
     "context/ctxhttp",
   ]
   pruneopts = "NUT"
-  revision = "49c15d80dfbc983ea25246ee959d970efe09ec09"
+  revision = "8a410e7b638dca158bf9e766925842f6651ff828"
 
 [[projects]]
   branch = "master"
-  digest = "1:806685616259192286b80e5924f92aad0a1cd880959cecd6441925f393a4a34d"
+  digest = "1:db0ef10bef8ec68d343f7371d5d6006c1086b5882654e10e7cc9335bfb551b8d"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
     "internal",
   ]
   pruneopts = "NUT"
-  revision = "3d292e4d0cdc3a0113e6d207bb137145ef1de42f"
+  revision = "d2e6202438beef2727060aa7cabdd924d92ebfd9"
+
+[[projects]]
+  branch = "master"
+  digest = "1:0e22b636435114add60ec3317a54eb909cea4acf2eef1ddd1d11225eac06acd4"
+  name = "golang.org/x/sys"
+  packages = ["windows"]
+  pruneopts = "NUT"
+  revision = "d99a578cf41bfccdeaf48b0845c823a4b8b0ad5e"
 
 [[projects]]
   digest = "1:8029e9743749d4be5bc9f7d42ea1659471767860f0cdc34d37c3111bd308a295"
@@ -210,7 +218,7 @@
   version = "v4.2.0"
 
 [[projects]]
-  digest = "1:fa265385a5175b4aaed0cccec60059a3f363c3f209bba1b658e9a12baddbc5e0"
+  digest = "1:d1b3d8ed1789f92b3d8192f8822cf422f803cd690139a8537a61313145fcae44"
   name = "gopkg.in/src-d/go-git.v4"
   packages = [
     ".",
@@ -255,8 +263,8 @@
     "utils/merkletrie/noder",
   ]
   pruneopts = "NUT"
-  revision = "3bd5e82b2512d85becae9677fa06b5a973fd4cfb"
-  version = "v4.5.0"
+  revision = "7b6c1266556f59ac436fada3fa6106d4a84f9b56"
+  version = "v4.6.0"
 
 [[projects]]
   digest = "1:b233ad4ec87ac916e7bf5e678e98a2cb9e8b52f6de6ad3e11834fc7a71b8e3bf"
