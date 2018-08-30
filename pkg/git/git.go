@@ -37,7 +37,7 @@ type (
 		ChangeType string
 	}
 
-	searchFunc func (hash string) (*plumbing.Reference, error)
+	searchFunc func(hash string) (*plumbing.Reference, error)
 )
 
 // New returns a new local git client
@@ -77,7 +77,7 @@ func (g *Git) getHashObjectByPrefix(hash string) (*plumbing.Reference, error) {
 		commitHash := reference.Hash.String()[0:7]
 		if commitHash == hash {
 			result = plumbing.NewReferenceFromStrings(reference.Hash.String(), reference.Hash.String())
-			return errors.New("Test")
+			return errors.New("ErrStop")
 		}
 		return nil
 	})
@@ -229,7 +229,7 @@ func (g *Git) GetCommitsSince(to *plumbing.Reference) ([]*ChangelogItem, error) 
 
 	// Iterate over all commits
 	// Break when `since` has been found
-	err = commits.ForEach(func(commit *object.Commit) error {
+	commits.ForEach(func(commit *object.Commit) error {
 		if commit.Hash == to.Hash() {
 			exists = true
 			return errors.New("ErrStop")
@@ -248,10 +248,6 @@ func (g *Git) GetCommitsSince(to *plumbing.Reference) ([]*ChangelogItem, error) 
 		}
 		return nil
 	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	if exists {
 		return history, nil
