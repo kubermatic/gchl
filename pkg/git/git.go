@@ -36,7 +36,11 @@ type (
 		IssueURL   string
 		ChangeType string
 	}
+
+	searchFunc func(hash string) (*plumbing.Reference, error)
 )
+
+var errNotFound = errors.New("Unable to find reference")
 
 // New returns a new local git client
 func New(path string) *Git {
@@ -55,13 +59,48 @@ func open(path string) *git.Repository {
 }
 
 func (g *Git) getHashObject(hash string) (*plumbing.Reference, error) {
+	if len(hash) > 40 {
+		return nil, errors.Errorf("hash prefix %s is too long", hash)
+	}
+	
 	_, err := g.repo.CommitObject(plumbing.NewHash(hash))
+	if err != nil {
+		return nil, errNotFound
+	}
+
+	result := plumbing.NewReferenceFromStrings(hash, hash)
+	return result, nil
+}
+
+func (g *Git) getHashObjectByPrefix(hash string) (*plumbing.Reference, error) {
+	if len(hash) > 40 {
+		return nil, errors.Errorf("hash prefix %s is too long", hash)
+	}
+
+	commits, err := g.repo.CommitObjects()
 	if err != nil {
 		return nil, err
 	}
 
-	reference := plumbing.NewReferenceFromStrings(hash, hash)
-	return reference, nil
+	var matches int
+	var result *plumbing.Reference
+	commits.ForEach(func(reference *object.Commit) error {
+		commitHash := reference.Hash.String()[0:len(hash)]
+		if commitHash == hash {
+			result = plumbing.NewReferenceFromStrings(reference.Hash.String(), reference.Hash.String())
+			matches++
+		}
+		return nil
+	})
+
+	if matches > 1 {
+		return nil, errors.Errorf("Multiple references found for %s.\nPlease extend the hash prefix or provide the full commit hash as found in `git log`.", hash)
+	}
+
+	if result == nil {
+		return nil, errNotFound
+	}
+	return result, nil
 }
 
 func (g *Git) getHashObjectByTagName(tagName string) (*plumbing.Reference, error) {
@@ -80,24 +119,31 @@ func (g *Git) getHashObjectByTagName(tagName string) (*plumbing.Reference, error
 	})
 
 	if result == nil {
-		return nil, errors.Errorf("Unable to find tag %v", tagName)
+		return nil, errNotFound
 	}
 	return result, nil
 }
 
-// GetReference returns a reference for a given name (e.g. tag name or branch name)
+// GetReference returns a reference for a given name (e.g. tag name, branch name, hash value or hash prefix (first 7 digits))
 func (g *Git) GetReference(name string) (*plumbing.Reference, error) {
-	var result *plumbing.Reference
-	if result, _ = g.getHashObject(name); result != nil {
-		return result, nil
+	searchFunctions := []searchFunc{
+		g.getHashObject,
+		g.getHashObjectByBranchName,
+		g.getHashObjectByTagName,
+		g.getHashObjectByPrefix,
 	}
-	if result, _ = g.getHashObjectByTagName(name); result != nil {
-		return result, nil
+
+	for _, search := range searchFunctions {
+		result, err := search(name)
+		if result != nil {
+			return result, nil
+		}
+		if err != errNotFound {
+			return nil, err
+		}
 	}
-	if result, _ = g.getHashObjectByBranchName(name); result != nil {
-		return result, nil
-	}
-	return result, errors.Errorf("Unable to find branch/tag/hash: %v", name)
+
+	return nil, errors.Errorf("Unable to find reference %v in commit history.\nPlease try another hash, branch or tag as a parameter.", name)
 }
 
 func (g *Git) getHashObjectByBranchName(branchName string) (*plumbing.Reference, error) {
@@ -116,7 +162,7 @@ func (g *Git) getHashObjectByBranchName(branchName string) (*plumbing.Reference,
 	})
 
 	if result == nil {
-		return nil, errors.Errorf("Unable to find branch %v", branchName)
+		return nil, errNotFound
 	}
 	return result, nil
 }
@@ -200,7 +246,7 @@ func (g *Git) GetCommitsSince(to *plumbing.Reference) ([]*ChangelogItem, error) 
 
 	// Iterate over all commits
 	// Break when `since` has been found
-	err = commits.ForEach(func(commit *object.Commit) error {
+	commits.ForEach(func(commit *object.Commit) error {
 		if commit.Hash == to.Hash() {
 			exists = true
 			return errors.New("ErrStop")
@@ -219,10 +265,6 @@ func (g *Git) GetCommitsSince(to *plumbing.Reference) ([]*ChangelogItem, error) 
 		}
 		return nil
 	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	if exists {
 		return history, nil
@@ -250,7 +292,7 @@ func getIssueFrom(message string) string {
 // When `--remote` is not set, the current repositories origin url is parsed
 func (g *Git) GetRemoteCredentials(c *cli.Context) (string, string, string, error) {
 	if c.GlobalString("token") == "" {
-		return "", "", "", errors.New("Flag `--token` not set.\nPlease provide a personal access token via flag `--token` or environment variable `GCHL_GITHUB_TOKEN`")
+		return "", "", "", errors.New("Your `Github Personal Access Token` is missing.\nPlease provide a personal access token via flag `--token` or environment variable `GCHL_GITHUB_TOKEN`.\n\nYou may create one here: https://github.com/settings/tokens")
 	}
 
 	if remote := c.GlobalString("remote"); remote != "" {
