@@ -59,6 +59,10 @@ func open(path string) *git.Repository {
 }
 
 func (g *Git) getHashObject(hash string) (*plumbing.Reference, error) {
+	if len(hash) > 40 {
+		return nil, errors.Errorf("hash prefix %s is too long", hash)
+	}
+	
 	_, err := g.repo.CommitObject(plumbing.NewHash(hash))
 	if err != nil {
 		return nil, errNotFound
