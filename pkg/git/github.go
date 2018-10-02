@@ -87,6 +87,10 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 							item.IssueURL = fmt.Sprintf("https://github.com/%v/%v/issues/%v", api.User, api.Repository, id)
 
 							resultsChan <- item
+						} else {
+							if !hasNotesNone(issue.GetBody()) {
+								errorsChan <- fmt.Errorf("PR https://github.com/%v/%v/issues/%v is missing the release note", api.User, api.Repository, id)
+							}
 						}
 					} else {
 						item.Author = issue.GetUser().GetLogin()
@@ -192,6 +196,15 @@ func hasReleaseNotes(message string) bool {
 	}
 
 	regex = `___release-note(.*\n[\s\S]*?\n)___`
+	matched, _ := regexp.MatchString(regex, body)
+	return matched
+}
+
+func hasNotesNone(message string) bool {
+	body := strings.Replace(message, "```", "___", -1)
+
+	// Special case: check if pr message release notes field with content NONE, return false
+	regex := `___release-note(.*\n((?i)none.*)*?\n)___`
 	matched, _ := regexp.MatchString(regex, body)
 	return matched
 }
