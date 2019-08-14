@@ -13,20 +13,29 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// FilterKind describes which kind of filter should be applied on the issue's release notes
+type FilterKind int
+
+const (
+	FilterNone FilterKind = iota
+	FilterReleaseNotes
+	FilterReleaseNotesNone
+)
+
 // GithubAPI is used to request the github api
 type GithubAPI struct {
 	User       string
 	Repository string
-	UseFilter  bool
+	Filter     FilterKind
 	Client     *gh.Client
 }
 
 // NewAPIClient returns a new client for interacting with the GitHub API
-func NewAPIClient(user string, repo string, token string, filter bool) *GithubAPI {
+func NewAPIClient(user string, repo string, token string, filter FilterKind) *GithubAPI {
 	return &GithubAPI{
 		User:       user,
 		Repository: repo,
-		UseFilter:  filter,
+		Filter:     filter,
 		Client:     newClient(token),
 	}
 }
@@ -76,7 +85,8 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 				}
 
 				if resp.StatusCode != 404 && issue != nil && issue.IsPullRequest() {
-					if api.UseFilter {
+					switch api.Filter {
+					case FilterReleaseNotes:
 						if hasReleaseNotes(issue.GetBody()) {
 							text, changeType := filter(issue.GetBody())
 
@@ -92,7 +102,20 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 								errorsChan <- fmt.Errorf("PR https://github.com/%v/%v/issues/%v is missing the release note", api.User, api.Repository, id)
 							}
 						}
-					} else {
+					case FilterReleaseNotesNone:
+						if hasNotesNone(issue.GetBody()) {
+							item.Author = issue.GetUser().GetLogin()
+							item.AuthorURL = fmt.Sprintf("https://github.com/%v", issue.GetUser().GetLogin())
+							item.Text = issue.GetTitle()
+							item.IssueURL = fmt.Sprintf("https://github.com/%v/%v/issues/%v", api.User, api.Repository, id)
+
+							resultsChan <- item
+						} else {
+							if !hasReleaseNotes(issue.GetBody()) {
+								errorsChan <- fmt.Errorf("PR https://github.com/%v/%v/issues/%v is missing the release note", api.User, api.Repository, id)
+							}
+						}
+					case FilterNone:
 						item.Author = issue.GetUser().GetLogin()
 						item.AuthorURL = fmt.Sprintf("https://github.com/%v", issue.GetUser().GetLogin())
 						item.Text = issue.GetTitle()

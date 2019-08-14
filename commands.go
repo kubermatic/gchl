@@ -16,6 +16,10 @@ func getCommands(action *action.Action, app *cli.App) []cli.Command {
 					Name:  "release-notes",
 					Usage: "use pull request titles instead of release-notes tag in the pull request message",
 				},
+				cli.BoolFlag{
+					Name:  "release-notes-none",
+					Usage: "list PRs that contain empty release-notes",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				return action.GenerateChangelogBetween(c)
@@ -29,6 +33,10 @@ func getCommands(action *action.Action, app *cli.App) []cli.Command {
 				cli.BoolFlag{
 					Name:  "release-notes",
 					Usage: "use pull request titles instead of release-notes tag in the pull request message",
+				},
+				cli.BoolFlag{
+					Name:  "release-notes-none",
+					Usage: "list PRs that contain empty release-notes",
 				},
 			},
 			Action: func(c *cli.Context) error {

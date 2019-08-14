@@ -36,7 +36,20 @@ func (a *Action) GenerateChangelogBetween(c *cli.Context) error {
 	}
 
 	realeaseNotes := c.Bool("release-notes")
-	commits, err = queryGithubAPI(user, repository, token, realeaseNotes, commits)
+	realeaseNotesNone := c.Bool("release-notes-none")
+	if realeaseNotes && realeaseNotesNone {
+		return fmt.Errorf("--release-notes and --release-notes-none cannot be used at the same time")
+	}
+
+	filter := git.FilterNone
+	if realeaseNotes {
+		filter = git.FilterReleaseNotes
+	}
+	if realeaseNotesNone {
+		filter = git.FilterReleaseNotesNone
+	}
+
+	commits, err = queryGithubAPI(user, repository, token, filter, commits)
 	if err != nil {
 		return err
 	}
@@ -92,7 +105,20 @@ func (a *Action) GenerateChangelogSince(c *cli.Context) error {
 	}
 
 	realeaseNotes := c.Bool("release-notes")
-	commits, err = queryGithubAPI(user, repository, token, realeaseNotes, commits)
+	realeaseNotesNone := c.Bool("release-notes-none")
+	if realeaseNotes && realeaseNotesNone {
+		return fmt.Errorf("--release-notes and --release-notes-none cannot be used at the same time")
+	}
+
+	filter := git.FilterNone
+	if realeaseNotes {
+		filter = git.FilterReleaseNotes
+	}
+	if realeaseNotesNone {
+		filter = git.FilterReleaseNotesNone
+	}
+
+	commits, err = queryGithubAPI(user, repository, token, filter, commits)
 	if err != nil {
 		return err
 	}
@@ -121,7 +147,7 @@ func (a *Action) GenerateChangelogSince(c *cli.Context) error {
 	return nil
 }
 
-func queryGithubAPI(user string, repository string, token string, filter bool, commits []*git.ChangelogItem) ([]*git.ChangelogItem, error) {
+func queryGithubAPI(user string, repository string, token string, filter git.FilterKind, commits []*git.ChangelogItem) ([]*git.ChangelogItem, error) {
 	api := git.NewAPIClient(user, repository, token, filter)
 	commits, err := api.CompareRemote(commits)
 	if err != nil {
