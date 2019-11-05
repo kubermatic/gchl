@@ -3,6 +3,7 @@ package git
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"sort"
 	"strconv"
@@ -70,6 +71,7 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 		go func() {
 			defer workersWG.Done()
 			for item := range itemsChan {
+			rerun:
 				id, err := strconv.Atoi(item.IssueID)
 				if err != nil {
 					cancel()
@@ -82,6 +84,14 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 					cancel()
 					errorsChan <- err
 					return
+				}
+
+				// If the PR is a cherry-pick from prow, get the parent PR's info,
+				// so that it doesn't show kubermatic-bot as the author.
+				if isCherry, parentID := isCherryPick(issue.GetBody()); isCherry {
+					fmt.Fprintln(os.Stderr, "Issue", id, "appears to be a cherry-pick of", parentID)
+					item.IssueID = parentID
+					goto rerun
 				}
 
 				if resp.StatusCode != 404 && issue != nil && issue.IsPullRequest() {
@@ -221,6 +231,16 @@ func hasReleaseNotes(message string) bool {
 	regex = `___release-note(.*\n[\s\S]*?\n)___`
 	matched, _ := regexp.MatchString(regex, body)
 	return matched
+}
+
+func isCherryPick(message string) (bool, string) {
+	re := regexp.MustCompile(`This is an automated cherry-pick of #([0-9]+)`)
+	matches := re.FindStringSubmatch(message)
+	if matches != nil && matches[1] != "" {
+		return true, matches[1]
+	}
+
+	return false, ""
 }
 
 func hasNotesNone(message string) bool {
