@@ -86,6 +86,11 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 					return
 				}
 
+				// skip dependabot bumps
+				if issue.GetUser().GetLogin() == "dependabot-preview[bot]" {
+					continue
+				}
+
 				// If the PR is a cherry-pick from prow, get the parent PR's info,
 				// so that it doesn't show kubermatic-bot as the author.
 				if isCherry, parentID := isCherryPick(issue.GetBody()); isCherry {
