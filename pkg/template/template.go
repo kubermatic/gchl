@@ -1,3 +1,19 @@
+/*
+Copyright 2020 The Kubermatic Kubernetes Platform contributors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package template
 
 import (
@@ -6,14 +22,16 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/kubermatic/gchl/pkg/git"
 	"github.com/urfave/cli"
+
+	"k8c.io/gchl/pkg/git"
 )
 
 // Render renders the changelog as markdown to stdout
 func Render(ctx *cli.Context, changelog *git.Changelog) (string, error) {
 	t := template.New("Changelog")
-	t.Parse(
+
+	_, err := t.Parse(
 		`
 ### [{{.Version}}]({{.RepositoryURL}})
 
@@ -23,8 +41,12 @@ func Render(ctx *cli.Context, changelog *git.Changelog) (string, error) {
 - {{.Text}} [#{{.IssueID}}]({{.IssueURL}}) ([{{.Author}}]({{.AuthorURL}}))
 {{end}}
 `)
+	if err != nil {
+		return "", err
+	}
+
 	var b bytes.Buffer
-	err := t.Execute(&b, changelog)
+	err = t.Execute(&b, changelog)
 	return b.String(), err
 }
 
@@ -83,7 +105,7 @@ func RenderReleaseNotes(ctx *cli.Context, changelog *git.Changelog) (string, err
 	}
 
 	t := template.New("Changelog")
-	t.Parse(
+	_, err := t.Parse(
 		`
 ### [{{.Version}}]({{.RepositoryURL}})
 
@@ -96,8 +118,11 @@ func RenderReleaseNotes(ctx *cli.Context, changelog *git.Changelog) (string, err
 {{end}}
 
 `)
+	if err != nil {
+		return "", err
+	}
 
 	var b bytes.Buffer
-	err := t.Execute(&b, data)
+	err = t.Execute(&b, data)
 	return b.String(), err
 }

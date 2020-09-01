@@ -5,8 +5,7 @@ A Go-written Changelog Generator. Create Changelogs based on GitHub pull request
 ## Installation
 
 ```
-go get -v
-go install
+go get k8c.io/gchl
 ```
 
 ## Usage
@@ -57,28 +56,28 @@ will result in the message being grouped under `bugfix:`. Changes without a type
 ## Overview
 
 ```
-NAME:                                               
-   gchl - A Go-written Changelog Generator - Generate Changelogs, based on GitHub PRs                    
+NAME:
+   gchl - A Go-written Changelog Generator - Generate Changelogs, based on GitHub PRs
 
-USAGE:                                              
-   gchl [global options] command [command options] [arguments...]                                        
+USAGE:
+   gchl [global options] command [command options] [arguments...]
 
-VERSION:                                            
-   v0.1                                             
+VERSION:
+   v0.1
 
-AUTHOR:                                             
-   Christian Bargmann <chris@cbrgm.de>              
+AUTHOR:
+   Christian Bargmann <chris@cbrgm.de>
 
-COMMANDS:                                           
-     between  Create a changelog for changes between to references.                                      
-     since    Create a changelog for changes since reference.                                            
-     help, h  Shows a list of commands or help for one command                                           
+COMMANDS:
+     between  Create a changelog for changes between to references.
+     since    Create a changelog for changes since reference.
+     help, h  Shows a list of commands or help for one command
 
-GLOBAL OPTIONS:                                     
-   --for-version value, -f value     Specify a version name that will be shown in changelog output (default: "v0.0.0")                                                                                             
-   --repository value, --repo value  The file path to the directory containing the git repository to be used (default: "/home/chris/go/src/github.com/kubermatic/kubermatic")                                      
-   --remote value, -r value          The remote github repository url                                    
-   --token value, -t value           Your personal access token provided by GitHub Inc. See: https://github.com/settings/tokens [$GCHL_GITHUB_TOKEN]                                                               
-   --help, -h                        show help      
+GLOBAL OPTIONS:
+   --for-version value, -f value     Specify a version name that will be shown in changelog output (default: "v0.0.0")
+   --repository value, --repo value  The file path to the directory containing the git repository to be used (default: "/home/chris/go/src/github.com/kubermatic/kubermatic")
+   --remote value, -r value          The remote github repository url
+   --token value, -t value           Your personal access token provided by GitHub Inc. See: https://github.com/settings/tokens [$GCHL_GITHUB_TOKEN]
+   --help, -h                        show help
    --version, -v                     print the version
 ```
