@@ -28,21 +28,22 @@ import (
 
 // GenerateChangelogBetween returns a changelog on stdout
 func (a *Action) GenerateChangelogBetween(c *cli.Context) error {
+	args := c.Args()
+	if len(args) == 0 || len(args) > 2 {
+		return errors.Errorf("Usage: gchl [global options] between [reference] [reference]")
+	}
+
 	local := git.New(c.GlobalString("repository"))
 	user, repository, token, err := local.GetRemoteCredentials(c)
 	if err != nil {
 		return err
 	}
 
-	if len(c.Args()) > 2 || len(c.Args()) == 0 {
-		return errors.Errorf("Usage: gchl [global options] between [reference] [reference]")
-	}
-
-	from, err := local.GetReference(c.Args().Get(0))
+	from, err := local.GetReference(args.Get(0))
 	if err != nil {
 		return err
 	}
-	to, err := local.GetReference(c.Args().Get(1))
+	to, err := local.GetReference(args.Get(1))
 	if err != nil {
 		return err
 	}
@@ -97,21 +98,18 @@ func (a *Action) GenerateChangelogBetween(c *cli.Context) error {
 
 // GenerateChangelogSince returns a changelog on stdout
 func (a *Action) GenerateChangelogSince(c *cli.Context) error {
+	args := c.Args()
+	if len(args) != 1 {
+		return errors.Errorf("Usage: gchl [global options] since [reference]")
+	}
+
 	local := git.New(c.GlobalString("repository"))
 	user, repository, token, err := local.GetRemoteCredentials(c)
 	if err != nil {
 		return err
 	}
 
-	if err != nil {
-		return err
-	}
-
-	if len(c.Args()) > 1 || len(c.Args()) == 0 {
-		return errors.Errorf("Usage: gchl [global options] since [reference]")
-	}
-
-	since, err := local.GetReference(c.Args().Get(0))
+	since, err := local.GetReference(args.Get(0))
 	if err != nil {
 		return err
 	}
@@ -141,7 +139,7 @@ func (a *Action) GenerateChangelogSince(c *cli.Context) error {
 	}
 
 	if len(commits) == 0 {
-		return errors.Errorf("No Pull Requests relevant for the changelog found since %v. Exit. ", since.Name().Short())
+		return errors.Errorf("No Pull Requests relevant for the changelog found since %v. Exit.", since.Name().Short())
 	}
 
 	changelog := git.Changelog{

@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -31,7 +30,6 @@ var (
 )
 
 func main() {
-
 	action := action.New()
 
 	app := cli.NewApp()
@@ -39,7 +37,7 @@ func main() {
 	app.Email = "christian@loodse.com"
 	app.Name = "gchl - A Go-written Changelog Generator"
 	app.Usage = "Generate Changelogs, based on GitHub PRs"
-	app.Version = fmt.Sprintf("%s", version)
+	app.Version = version
 	app.Commands = getCommands(action, app)
 	app.Flags = getGlobalFlags()
 

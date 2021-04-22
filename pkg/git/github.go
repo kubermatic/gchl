@@ -230,13 +230,21 @@ func filter(message string) (string, string) {
 	noteType := strings.ToLower(strings.TrimSpace(submatches[1]))
 	text := submatches[2]
 
-	if noteType == "" {
-		noteType = "misc"
-	}
-
 	// replace linebreaks
 	parser := regexp.MustCompile(`\r?\n`)
-	text = parser.ReplaceAllString(text, "")
+	text = strings.TrimSpace(parser.ReplaceAllString(text, ""))
+
+	// remove trailing dots
+	text = strings.TrimSuffix(text, ".")
+
+	if noteType == "" {
+		if isBreakingChange(text) {
+			noteType = "breaking changes"
+		} else {
+			noteType = "misc"
+		}
+	}
+
 	return text, noteType
 }
 
@@ -252,6 +260,10 @@ func hasReleaseNotes(message string) bool {
 	regex = `___release-note(.*\n[\s\S]*?\n)___`
 	matched, _ := regexp.MatchString(regex, body)
 	return matched
+}
+
+func isBreakingChange(releaseNote string) bool {
+	return strings.Contains(strings.ToLower(releaseNote), "action required")
 }
 
 func isCherryPick(message string) (bool, string) {

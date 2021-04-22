@@ -18,9 +18,9 @@ package template
 
 import (
 	"bytes"
-	"html/template"
 	"sort"
 	"strings"
+	"text/template"
 
 	"github.com/urfave/cli"
 
@@ -33,13 +33,11 @@ func Render(ctx *cli.Context, changelog *git.Changelog) (string, error) {
 
 	_, err := t.Parse(
 		`
-### [{{.Version}}]({{.RepositoryURL}})
+## [{{ .Version }}]({{ .RepositoryURL }}/releases/tag/{{ .Version }})
 
-**Merged pull requests:**
-
-{{range $.Items -}}
-- {{.Text}} [#{{.IssueID}}]({{.IssueURL}}) ([{{.Author}}]({{.AuthorURL}}))
-{{end}}
+{{ range $.Items -}}
+- {{ .Text }} ([#{{ .IssueID }}]({{ .IssueURL }}))
+{{ end }}
 `)
 	if err != nil {
 		return "", err
@@ -47,6 +45,39 @@ func Render(ctx *cli.Context, changelog *git.Changelog) (string, error) {
 
 	var b bytes.Buffer
 	err = t.Execute(&b, changelog)
+	return b.String(), err
+}
+
+// RenderReleaseNotes renders the changelog as markdown to stdout
+func RenderReleaseNotes(ctx *cli.Context, changelog *git.Changelog) (string, error) {
+	changesGroupedByType := groupChangesByType(changelog.Items)
+
+	data := struct {
+		ChangesGroupedByType []changesByType
+		Version              string
+		RepositoryURL        string
+	}{
+		ChangesGroupedByType: changesGroupedByType,
+		Version:              changelog.Version,
+		RepositoryURL:        changelog.RepositoryURL,
+	}
+
+	t := template.New("Changelog")
+	_, err := t.Parse(strings.TrimSpace(`
+## [{{ .Version }}]({{ .RepositoryURL }}/releases/tag/{{ .Version }})
+{{ range .ChangesGroupedByType }}
+### {{ .Type }}
+{{ range .Items }}
+- {{ .Text }} ([#{{ .IssueID }}]({{ .IssueURL }}))
+{{- end }}
+{{ end }}
+`))
+	if err != nil {
+		return "", err
+	}
+
+	var b bytes.Buffer
+	err = t.Execute(&b, data)
 	return b.String(), err
 }
 
@@ -88,41 +119,4 @@ func groupChangesByType(items []*git.ChangelogItem) []changesByType {
 	}
 
 	return groupedChanges
-}
-
-// RenderReleaseNotes renders the changelog as markdown to stdout
-func RenderReleaseNotes(ctx *cli.Context, changelog *git.Changelog) (string, error) {
-	changesGroupedByType := groupChangesByType(changelog.Items)
-
-	data := struct {
-		ChangesGroupedByType []changesByType
-		Version              string
-		RepositoryURL        string
-	}{
-		ChangesGroupedByType: changesGroupedByType,
-		Version:              changelog.Version,
-		RepositoryURL:        changelog.RepositoryURL,
-	}
-
-	t := template.New("Changelog")
-	_, err := t.Parse(
-		`
-### [{{.Version}}]({{.RepositoryURL}})
-
-{{range .ChangesGroupedByType}}
-**{{ .Type }}:**
-
-{{range .Items -}}
- - {{.Text}} [#{{.IssueID}}]({{.IssueURL}}) ([{{.Author}}]({{.AuthorURL}}))
-{{end}}
-{{end}}
-
-`)
-	if err != nil {
-		return "", err
-	}
-
-	var b bytes.Buffer
-	err = t.Execute(&b, data)
-	return b.String(), err
 }
