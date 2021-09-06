@@ -103,7 +103,7 @@ func (api *GithubAPI) CompareRemote(items []*ChangelogItem) ([]*ChangelogItem, e
 				}
 
 				// skip dependabot bumps
-				if issue.GetUser().GetLogin() == "dependabot-preview[bot]" {
+				if issue.GetUser().GetLogin() == "dependabot-preview[bot]" || issue.GetUser().GetLogin() == "dependabot[bot]" {
 					continue
 				}
 
