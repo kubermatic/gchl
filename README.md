@@ -5,79 +5,49 @@ A Go-written Changelog Generator. Create Changelogs based on GitHub pull request
 ## Installation
 
 ```
-go get k8c.io/gchl
+go install k8c.io/gchl
 ```
 
 ## Usage
 
-You will need a github personal access token for api calls, create one [here](https://github.com/settings/tokens).
-You can pass the token to `gchl` as a flag `--token` or via env variable `GCHL_GITHUB_TOKEN`
+You will need a GitHub personal access token for API calls, create one [here](https://github.com/settings/tokens).
+You can pass the token to `gchl` via the environment variable `GCHL_GITHUB_TOKEN`.
 
-Navigate into a repository and generate a Changelog of all changes in form of merged PRs between two branches / tags / hashes
+The generate is configured with a version to generate the changelog for. It will automatically determine the commit range by scanning the given repository and will then extract all release notes from all commits in the determined range. The changes are then cleaned up, grouped and printed to stdout as Markdown.
 
-```
-gchl between [branch/tag/hash] [branch/tag/hash]
-gchl between v1.2 v1.0
+```bash
+export GCHL_GITHUB_TOKEN=MYTOKENHERE
+gchl --organization kubermatic --repository kubermatic --for-version v2.21.0
 ```
 
-or since between `HEAD` and another reference
-
-```
-gchl between [branch/tag/hash]
-gchl since v1.0
-```
+Use `--verbose` to see the API calls being made.
 
 ### Get release notes via PR message annotation
 
-In your pull request use a markdown code block annotated with `release-note` (Don't copy paste the example below as it uses `'` ;))
+In your pull request use a Markdown code block annotated with `release-note` (Don't copy paste the example below as it uses `'` ;))
 
 ```
-'''release-notes
+'''release-note
 This text will be visible in changelog
 '''
 ```
 
-and run
+### Change Types
+
+By default, `gchl` reads the labels from pull requests and uses the first one that starts with `kind/` as the change's type (with the `kind/` prefix stripped). If no such label exists, the release-note block can also be annotated with the type by adding it right next to `release-note`:
 
 ```
-gchl between v1.2 v1.0 --release-notes
-```
-
-The block can also contain a type of a change, which will be used to group the changes in the log, e.g.:
-
-```
-'''release-notes bugfix
+'''release-note bugfix
 The important functionality has been fixed
 '''
 ```
 
-will result in the message being grouped under `bugfix:`. Changes without a type specified will be grouped under `misc:`.
-
 ## Overview
 
 ```
-NAME:
-   gchl - A Go-written Changelog Generator - Generate Changelogs, based on GitHub PRs
-
-USAGE:
-   gchl [global options] command [command options] [arguments...]
-
-VERSION:
-   v0.1
-
-AUTHOR:
-   Christian Bargmann <chris@cbrgm.de>
-
-COMMANDS:
-     between  Create a changelog for changes between to references.
-     since    Create a changelog for changes since reference.
-     help, h  Shows a list of commands or help for one command
-
-GLOBAL OPTIONS:
-   --for-version value, -f value     Specify a version name that will be shown in changelog output (default: "v0.0.0")
-   --repository value, --repo value  The file path to the directory containing the git repository to be used (default: "/home/chris/go/src/github.com/kubermatic/kubermatic")
-   --remote value, -r value          The remote github repository url
-   --token value, -t value           Your personal access token provided by GitHub Inc. See: https://github.com/settings/tokens [$GCHL_GITHUB_TOKEN]
-   --help, -h                        show help
-   --version, -v                     print the version
+Usage of ./gchl:
+  -v, --for-version string    Name of the release to generate the changelog for
+  -o, --organization string   Name of the GitHub organization
+  -r, --repository string     Name of the repository
+  -V, --verbose               Enable more verbose logging
 ```

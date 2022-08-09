@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The Kubermatic Kubernetes Platform contributors.
+Copyright 2022 The Kubermatic Kubernetes Platform contributors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,31 +14,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package action
+package types
 
-import (
-	"os"
-	"path/filepath"
-)
+import "k8s.io/apimachinery/pkg/util/sets"
 
-// Action knows everything to run gchl CLI actions
-type Action struct {
+type Commit struct {
+	Hash        string
+	Title       string
+	PullRequest PullRequest
+	Author      string
+}
+
+type PullRequest struct {
+	Number int
+	Title  string
+	Body   string
+	Labels sets.String
+}
+
+type RepositoryRefs struct {
+	DefaultBranch string
+	Tags          []Ref
+	Branches      []Ref
+}
+
+type Ref struct {
 	Name string
-}
-
-// New returns a new Action wrapper
-func New() *Action {
-	return newAction()
-}
-
-func newAction() *Action {
-	name := "gchl"
-	if len(os.Args) > 0 {
-		name = filepath.Base(os.Args[0])
-	}
-
-	act := &Action{
-		Name: name,
-	}
-	return act
+	Hash string
 }
