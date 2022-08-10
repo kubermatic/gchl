@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"k8c.io/gchl/pkg/github"
 	"k8c.io/gchl/pkg/types"
@@ -91,6 +92,15 @@ func DetermineRange(ctx context.Context, client *github.Client, log logrus.Field
 	// Now we know the top (latest) commit for the changelog (most likely
 	// the commit that is tagged with opts.ForVersion). Now we need to figure
 	// out far back we need to go to collect all relevant commits.
+
+	// If a custom --end flag is given, this is trivial.
+
+	if opts.End != "" {
+		return targetTag.Hash, func(c types.Commit) bool {
+			return strings.HasPrefix(c.Hash, opts.End)
+		}, nil
+	}
+
 	// This algorithm is tailored a bit towards KKP which uses release branches
 	// and sometimes tags new versions on the master branch and sometimes only
 	// on the release branch (i.e. the point when a new release branch is opened

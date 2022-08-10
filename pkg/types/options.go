@@ -30,6 +30,7 @@ type Options struct {
 	Repository   string
 	ForVersion   string
 	GithubToken  string
+	End          string
 	Verbose      bool
 }
 
@@ -37,6 +38,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVarP(&o.Organization, "organization", "o", "", "Name of the GitHub organization")
 	fs.StringVarP(&o.Repository, "repository", "r", "", "Name of the repository")
 	fs.StringVarP(&o.ForVersion, "for-version", "v", "", "Name of the release to generate the changelog for")
+	fs.StringVarP(&o.End, "end", "e", "", "Commit hash where to stop (instead of following the branch until the previous version)")
 	fs.BoolVarP(&o.Verbose, "verbose", "V", false, "Enable more verbose logging")
 }
 
