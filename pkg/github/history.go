@@ -196,6 +196,11 @@ func (c *Client) fetchLogPage(ctx context.Context, owner string, name string, he
 
 	commits := []types.Commit{}
 	for _, commit := range q.Repository.Object.Commit.History.Nodes {
+		if len(commit.AssociatedPullRequests.Nodes) == 0 {
+			c.log.WithField("commit", commit.OID).Warn("Commit has no associated pull request.")
+			continue
+		}
+
 		commits = append(commits, convertCommit(commit))
 	}
 
