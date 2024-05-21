@@ -32,7 +32,9 @@ func NewMarkdownRenderer() Renderer {
 }
 
 var markdownTemplate = `
-## [{{ .Version }}]({{ .RepositoryURL }}/releases/tag/{{ .Version }})
+## {{ .Version }}
+
+**GitHub release: [{{ .Version }}]({{ .RepositoryURL }}/releases/tag/{{ .Version }})**
 {{ range .ChangeGroups }}
 ### {{ .Title }}
 {{ range .Changes }}
