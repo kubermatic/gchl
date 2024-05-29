@@ -73,18 +73,18 @@ func (t ChangeType) Title() string {
 }
 
 type Changelog struct {
-	Version       string
-	RepositoryURL string
-	ChangeGroups  []ChangeGroup
+	Version       string        `yaml:"version" json:"version"`
+	RepositoryURL string        `yaml:"repository" json:"repository"`
+	ChangeGroups  []ChangeGroup `yaml:"groups" json:"groups"`
 }
 
 type ChangeGroup struct {
-	Title   string
-	Changes []Change
+	Title   string   `yaml:"title" json:"title"`
+	Changes []Change `yaml:"changes" json:"changes"`
 }
 
 type Change struct {
-	types.Commit
+	Commit types.Commit `yaml:"commit" json:"commit"`
 
 	Type     ChangeType `yaml:"type"`
 	Breaking bool       `yaml:"breaking,omitempty"`

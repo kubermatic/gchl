@@ -102,6 +102,6 @@ func convertPullRequest(api graphqlPullRequest) types.PullRequest {
 		Number: api.Number,
 		Title:  api.Title,
 		Body:   api.Body,
-		Labels: labels,
+		Labels: sets.List(labels),
 	}
 }

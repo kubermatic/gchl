@@ -24,7 +24,6 @@ import (
 	"k8c.io/gchl/pkg/types"
 
 	"github.com/go-openapi/inflect"
-	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 func processCommit(commit types.Commit) ([]Change, error) {
@@ -232,7 +231,7 @@ func harmonizeLinePrefixes(text string) string {
 }
 
 func commitChangeType(commit types.Commit) ChangeType {
-	for _, label := range sets.List(commit.PullRequest.Labels) {
+	for _, label := range commit.PullRequest.Labels {
 		if strings.HasPrefix(label, "kind/") {
 			return ParseChangeType(strings.TrimPrefix(label, "kind/"))
 		}

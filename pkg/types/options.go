@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/spf13/pflag"
@@ -32,20 +33,24 @@ type Options struct {
 	GithubToken  string
 	End          string
 	Verbose      bool
+	OutputFormat string
 }
+
+var outputFormats = []string{"markdown", "json"}
 
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVarP(&o.Organization, "organization", "o", "", "Name of the GitHub organization")
 	fs.StringVarP(&o.Repository, "repository", "r", "", "Name of the repository")
 	fs.StringVarP(&o.ForVersion, "for-version", "v", "", "Name of the release to generate the changelog for")
 	fs.StringVarP(&o.End, "end", "e", "", "Commit hash where to stop (instead of following the branch until the previous version)")
+	fs.StringVarP(&o.OutputFormat, "format", "f", "markdown", fmt.Sprintf("Output format (one of %v)", outputFormats))
 	fs.BoolVarP(&o.Verbose, "verbose", "V", false, "Enable more verbose logging")
 }
 
 func (o *Options) Parse() error {
 	o.GithubToken = os.Getenv("GCHL_GITHUB_TOKEN")
 	if o.GithubToken == "" {
-		return errors.New("no $GCHL_GITHUB_TOKEN defined")
+		return errors.New("no $GCHL_GITHUB_TOKEN environment variable defined")
 	}
 
 	if o.Organization == "" {
@@ -62,6 +67,14 @@ func (o *Options) Parse() error {
 
 	if _, err := semver.NewVersion(o.ForVersion); err != nil {
 		return fmt.Errorf("--for-version %q is not a valid semver: %w", o.ForVersion, err)
+	}
+
+	if o.OutputFormat != "" && !slices.Contains(outputFormats, o.OutputFormat) {
+		return fmt.Errorf("invalid --format %q, must be one of %v", o.OutputFormat, outputFormats)
+	}
+
+	if o.OutputFormat == "" {
+		o.OutputFormat = "markdown"
 	}
 
 	return nil

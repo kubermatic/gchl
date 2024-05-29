@@ -16,20 +16,18 @@ limitations under the License.
 
 package types
 
-import "k8s.io/apimachinery/pkg/util/sets"
-
 type Commit struct {
-	Hash        string      `yaml:"hash"`
-	Title       string      `yaml:"title"`
-	PullRequest PullRequest `yaml:"pullRequest"`
-	Author      string      `yaml:"author"`
+	Hash        string      `yaml:"hash" json:"hash"`
+	Title       string      `yaml:"title" json:"title"`
+	PullRequest PullRequest `yaml:"pullRequest" json:"pullRequest"`
+	Author      string      `yaml:"author" json:"author"`
 }
 
 type PullRequest struct {
-	Number int              `yaml:"number"`
-	Title  string           `yaml:"title"`
-	Body   string           `yaml:"body"`
-	Labels sets.Set[string] `yaml:"labels"`
+	Number int      `yaml:"number" json:"number"`
+	Title  string   `yaml:"title" json:"title"`
+	Body   string   `yaml:"body" json:"body"`
+	Labels []string `yaml:"labels" json:"labels"`
 }
 
 type RepositoryRefs struct {

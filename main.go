@@ -106,7 +106,16 @@ func main() {
 		log.Fatalf("Failed to create changelog from commits: %v", err)
 	}
 
-	renderer := render.NewMarkdownRenderer()
+	var renderer render.Renderer
+	switch opts.OutputFormat {
+	case "markdown":
+		renderer = render.NewMarkdownRenderer()
+	case "json":
+		renderer = render.NewJSONRenderer()
+	default:
+		log.Fatalf("Unknown output format %q.", opts.OutputFormat)
+	}
+
 	output, err := renderer.Render(changelog)
 	if err != nil {
 		log.Fatalf("Failed to render changelog: %v", err)
