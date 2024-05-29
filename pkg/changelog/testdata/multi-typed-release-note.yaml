@@ -1,0 +1,19 @@
+pr:
+  labels:
+    - kind/bug
+
+  body: |
+    hello world
+    asdasd
+
+    ```release-note
+    * Update operating-system-manager to v1.5.1.
+    * [ACTION REQUIRED] The latest Ubuntu 22.04 images ship with cloud-init 24.x package. This package has breaking changes and thus rendered our OSPs as incompatible. It's recommended to refresh your machines with latest provided OSPs to ensure that a system-wide package update, that updates cloud-init to 24.x, doesn't break the machines.
+    ```
+
+changes:
+  - releaseNote: "The latest Ubuntu 22.04 images ship with cloud-init 24.x package. This package has breaking changes and thus rendered our OSPs as incompatible. It's recommended to refresh your machines with latest provided OSPs to ensure that a system-wide package update, that updates cloud-init to 24.x, doesn't break the machines"
+    breaking: true
+    type: bugfix
+  - releaseNote: "Update operating-system-manager to v1.5.1"
+    type: update

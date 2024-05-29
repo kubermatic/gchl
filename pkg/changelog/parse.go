@@ -143,23 +143,22 @@ func splitIntoLines(text string) []string {
 }
 
 func itemToChange(explicitType ChangeType, breaking bool, text string) Change {
-	text = strings.TrimSuffix(text, ".")
-	text = inflect.Capitalize(text)
-	text = harmonizeLinePrefixes(text)
-
 	// item is breaking if it's in its text or the entire release-note block
 	// is marked as breaking
 	breaking = breaking || isBreakingChange(text)
 
-	if explicitType == "" {
-		switch {
-		case isBugfix(text):
-			explicitType = ChangeTypeBugfix
-		case isUpdate(text):
-			explicitType = ChangeTypeUpdate
-		default:
-			explicitType = ChangeTypeMisc
-		}
+	text = strings.TrimSuffix(text, ".")
+	text = removeActionRequired(text)
+	text = inflect.Capitalize(text)
+	text = harmonizeLinePrefixes(text)
+
+	switch {
+	case isBugfix(text):
+		explicitType = ChangeTypeBugfix
+	case isUpdate(text):
+		explicitType = ChangeTypeUpdate
+	case explicitType == "":
+		explicitType = ChangeTypeMisc
 	}
 
 	return Change{
@@ -175,13 +174,25 @@ func isBreakingChange(text string) bool {
 }
 
 func isBugfix(releaseNote string) bool {
-	return strings.HasPrefix(releaseNote, "Fix ")
+	return strings.HasPrefix(strings.ToLower(releaseNote), "fix ")
 }
 
-var isUpdateRegex = regexp.MustCompile(`updat(es|ed|ing|e) (.+)( version)? to (.+?)$`)
+var isUpdateRegex = regexp.MustCompile(`^updat(es|ed|ing|e) `)
 
 func isUpdate(releaseNote string) bool {
 	return isUpdateRegex.MatchString(strings.ToLower(releaseNote))
+}
+
+var actionRequiredRegex = regexp.MustCompile(`(?i)^[[*]*action required[\]*:]*`)
+
+// Remove redundant "ACTION REQUIRED" prefixes: breaking changes are already
+// grouped into a dedicated section in the changelog, no need to prefix every
+// item with the same yelling.
+func removeActionRequired(text string) string {
+	text = actionRequiredRegex.ReplaceAllLiteralString(text, "")
+	text = strings.TrimSpace(text)
+
+	return text
 }
 
 func harmonizeLinePrefixes(text string) string {
@@ -212,6 +223,7 @@ func harmonizeLinePrefixes(text string) string {
 		"Removes":     "Remove",
 		"Removed":     "Remove",
 		"Removing":    "Remove",
+		"Resolved":    "Resolve",
 		"Deprecates":  "Deprecate",
 		"Deprecated":  "Deprecate",
 		"Deprecating": "Deprecate",

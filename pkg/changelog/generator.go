@@ -18,6 +18,8 @@ package changelog
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 
 	"k8c.io/gchl/pkg/types"
 
@@ -82,15 +84,63 @@ func (g *Generator) groupChanges(changes []Change) []ChangeGroup {
 	// List() sorts for us
 	changeTypes := sets.List(sets.KeySet(tempMap))
 
+	// change groups are supposed to be sorted alphabetically, except for some
+	// well known groups which we want to put in specific spots
+	//
+	// 1.   New Features
+	// 2.   API Changes
+	// 3.   Deprecations
+	// ...
+	// N-2. Miscellaneous
+	// N-1. Chore
+	// N.   Updates
+	//
+	// Everything between 3. and N-2 is sorted alphabetically.
+	changeTypes = sortSemantically(changeTypes)
+
 	result := []ChangeGroup{}
 	for _, changeType := range changeTypes {
 		changes := tempMap[changeType]
 
 		result = append(result, ChangeGroup{
-			Title:   changeType.Title(),
+			Type:    changeType,
 			Changes: changes,
 		})
 	}
 
 	return result
+}
+
+func sortSemantically(changeTypes []ChangeType) []ChangeType {
+	slices.SortStableFunc(changeTypes, func(a, b ChangeType) int {
+		for _, check := range []ChangeType{
+			ChangeTypeFeature,
+			ChangeTypeAPIChange,
+			ChangeTypeDeprecation,
+		} {
+			if a == check {
+				return -1
+			}
+			if b == check {
+				return 1
+			}
+		}
+
+		for _, check := range []ChangeType{
+			ChangeTypeUpdate,
+			ChangeTypeChore,
+			ChangeTypeMisc,
+		} {
+			if a == check {
+				return 1
+			}
+			if b == check {
+				return -1
+			}
+		}
+
+		return strings.Compare(string(a), string(b))
+	})
+
+	return changeTypes
 }

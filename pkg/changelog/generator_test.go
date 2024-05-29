@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The Kubermatic Kubernetes Platform contributors.
+Copyright 2024 The Kubermatic Kubernetes Platform contributors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,36 +25,6 @@ import (
 
 	"gopkg.in/yaml.v3"
 )
-
-// func TestHumanReadableChangeType(t *testing.T) {
-// 	testcases := []struct {
-// 		identifier string
-// 		expected   string
-// 	}{
-// 		{
-// 			identifier: "breaking change",
-// 			expected:   "Breaking Change",
-// 		},
-// 		{
-// 			identifier: "api change",
-// 			expected:   "API Change",
-// 		},
-// 		{
-// 			identifier: "api-change",
-// 			expected:   "API Changes",
-// 		},
-// 	}
-
-// 	for _, testcase := range testcases {
-// 		t.Run(testcase.identifier, func(t *testing.T) {
-// 			result := humanReadableChangeType(testcase.identifier)
-
-// 			if result != testcase.expected {
-// 				t.Fatalf("Expected %q, got %q.", testcase.expected, result)
-// 			}
-// 		})
-// 	}
-// }
 
 type generateChangesTestcase struct {
 	PR      types.PullRequest `yaml:"pr"`

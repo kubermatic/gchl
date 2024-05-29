@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The Kubermatic Kubernetes Platform contributors.
+Copyright 2024 The Kubermatic Kubernetes Platform contributors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,35 +20,46 @@ import (
 	"strings"
 
 	"k8c.io/gchl/pkg/types"
-
-	"github.com/go-openapi/inflect"
 )
 
 type ChangeType string
 
 const (
-	ChangeTypeAPIChange ChangeType = "api-change"
-	ChangeTypeUpdate    ChangeType = "update"
-	ChangeTypeBugfix    ChangeType = "bugfix"
-	ChangeTypeFeature   ChangeType = "feature"
-	ChangeTypeMisc      ChangeType = "misc"
+	ChangeTypeAPIChange     ChangeType = "api-change"
+	ChangeTypeBugfix        ChangeType = "bugfix"
+	ChangeTypeCleanup       ChangeType = "cleanup"
+	ChangeTypeDeprecation   ChangeType = "deprecation"
+	ChangeTypeDocumentation ChangeType = "documentation"
+	ChangeTypeFeature       ChangeType = "feature"
+	ChangeTypeMisc          ChangeType = "misc"
+	ChangeTypeChore         ChangeType = "chore"
+	ChangeTypeRegression    ChangeType = "regresssion"
+	ChangeTypeUpdate        ChangeType = "update"
 )
 
 var knownChangeTypes = map[string]ChangeType{
-	"api-change":    ChangeTypeAPIChange,
 	"api change":    ChangeTypeAPIChange,
-	"update":        ChangeTypeUpdate,
-	"updates":       ChangeTypeUpdate,
-	"fix":           ChangeTypeBugfix,
-	"fixes":         ChangeTypeBugfix,
+	"api-change":    ChangeTypeAPIChange,
+	"bug":           ChangeTypeBugfix,
 	"bugfix":        ChangeTypeBugfix,
 	"bugfixes":      ChangeTypeBugfix,
-	"bug":           ChangeTypeBugfix,
+	"chore":         ChangeTypeChore,
+	"cleanup":       ChangeTypeCleanup,
+	"deprecates":    ChangeTypeDeprecation,
+	"deprecation":   ChangeTypeDeprecation,
+	"doc":           ChangeTypeDocumentation,
+	"docs":          ChangeTypeDocumentation,
+	"documentation": ChangeTypeDocumentation,
 	"feature":       ChangeTypeFeature,
 	"features":      ChangeTypeFeature,
+	"fix":           ChangeTypeBugfix,
+	"fixes":         ChangeTypeBugfix,
 	"misc":          ChangeTypeMisc,
 	"miscellaneous": ChangeTypeMisc,
 	"none":          ChangeTypeMisc,
+	"regression":    ChangeTypeRegression,
+	"update":        ChangeTypeUpdate,
+	"updates":       ChangeTypeUpdate,
 }
 
 func ParseChangeType(s string) ChangeType {
@@ -60,18 +71,6 @@ func ParseChangeType(s string) ChangeType {
 	return ChangeType(s)
 }
 
-func (t ChangeType) Title() string {
-	if t == ChangeTypeMisc {
-		t = "Miscellaneous"
-	}
-
-	title := strings.ReplaceAll(string(t), "-", " ")
-	title = inflect.Titleize(title)
-	title = strings.ReplaceAll(title, "Api", "API")
-
-	return title
-}
-
 type Changelog struct {
 	Version       string        `yaml:"version" json:"version"`
 	RepositoryURL string        `yaml:"repository" json:"repository"`
@@ -79,8 +78,8 @@ type Changelog struct {
 }
 
 type ChangeGroup struct {
-	Title   string   `yaml:"title" json:"title"`
-	Changes []Change `yaml:"changes" json:"changes"`
+	Type    ChangeType `yaml:"type" json:"type"`
+	Changes []Change   `yaml:"changes" json:"changes"`
 }
 
 type Change struct {
@@ -89,4 +88,18 @@ type Change struct {
 	Type     ChangeType `yaml:"type"`
 	Breaking bool       `yaml:"breaking,omitempty"`
 	Text     string     `yaml:"releaseNote"`
+}
+
+func (c *Changelog) BreakingChanges() []Change {
+	var breaks []Change
+
+	for _, group := range c.ChangeGroups {
+		for i, change := range group.Changes {
+			if change.Breaking {
+				breaks = append(breaks, group.Changes[i])
+			}
+		}
+	}
+
+	return breaks
 }

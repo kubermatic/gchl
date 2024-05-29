@@ -23,6 +23,8 @@ import (
 	"text/template"
 
 	"k8c.io/gchl/pkg/changelog"
+
+	"github.com/go-openapi/inflect"
 )
 
 type markdown struct{}
@@ -35,18 +37,52 @@ var markdownTemplate = `
 ## {{ .Version }}
 
 **GitHub release: [{{ .Version }}]({{ .RepositoryURL }}/releases/tag/{{ .Version }})**
+{{- $breaking := .BreakingChanges }}
+{{- if $breaking }}
+
+### Breaking Changes
+
+This release contains changes that require additional attention, please read the following items carefully.
+{{ range $breaking }}
+- {{ .Text }} ([#{{ .Commit.PullRequest.Number }}]({{ prlink .Commit.PullRequest.Number }}))
+{{- end }}
+{{- end }}
 {{ range .ChangeGroups }}
-### {{ .Title }}
+### {{ typename .Type }}
 {{ range .Changes }}
-- {{ .ReleaseNote }} ([#{{ .Commit.PullRequest.Number }}]({{ prlink .Commit.PullRequest.Number }}))
+- {{ .Text }} ([#{{ .Commit.PullRequest.Number }}]({{ prlink .Commit.PullRequest.Number }}))
 {{- end }}
 {{ end }}
 `
+
+var overriddenTypeNames = map[changelog.ChangeType]string{
+	changelog.ChangeTypeAPIChange:     "API Changes",
+	changelog.ChangeTypeBugfix:        "Bugfixes",
+	changelog.ChangeTypeCleanup:       "Cleanups",
+	changelog.ChangeTypeDeprecation:   "Deprecations",
+	changelog.ChangeTypeDocumentation: "Documentation",
+	changelog.ChangeTypeFeature:       "New Features",
+	changelog.ChangeTypeMisc:          "Miscellaneous",
+	changelog.ChangeTypeChore:         "Chores",
+	changelog.ChangeTypeRegression:    "Regresssions",
+	changelog.ChangeTypeUpdate:        "Updates",
+}
 
 func (m *markdown) Render(log *changelog.Changelog) (string, error) {
 	t := template.New("changelog").Funcs(template.FuncMap{
 		"prlink": func(number int) string {
 			return fmt.Sprintf("%s/pull/%d", log.RepositoryURL, number)
+		},
+		"typename": func(changeType changelog.ChangeType) string {
+			if known, ok := overriddenTypeNames[changeType]; ok {
+				return known
+			}
+
+			title := strings.ReplaceAll(string(changeType), "-", " ")
+			title = inflect.Titleize(title)
+			title = strings.ReplaceAll(title, "Api", "API")
+
+			return title
 		},
 	})
 

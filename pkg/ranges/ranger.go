@@ -229,8 +229,8 @@ func findPreviousReleaseBranch(currentVersion *semver.Version, allRepoRefs types
 	return fmt.Sprintf("release/v%d.%d", prevMajor, prevMinor), nil
 }
 
-func toLookupTable(commits []types.Commit) sets.String {
-	result := sets.NewString()
+func toLookupTable(commits []types.Commit) sets.Set[string] {
+	result := sets.New[string]()
 	for _, commit := range commits {
 		result.Insert(commit.Hash)
 	}
@@ -242,8 +242,8 @@ func toLookupTable(commits []types.Commit) sets.String {
 // so that the lookup only contains stable versions. This is because later when we use it,
 // we do not want to stop at alpha versions, but only on stable versions. The same goes for
 // the start version (otherwise we would stop immediately on the first commit).
-func toTagLookupTable(tags []types.Ref, targetVersion *semver.Version) sets.String {
-	result := sets.NewString()
+func toTagLookupTable(tags []types.Ref, targetVersion *semver.Version) sets.Set[string] {
+	result := sets.New[string]()
 	for _, tag := range tags {
 		sv, err := semver.NewVersion(tag.Name)
 		if err == nil && sv.Prerelease() == "" && !targetVersion.Equal(sv) {
