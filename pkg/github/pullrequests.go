@@ -93,7 +93,7 @@ func (c *Client) fetchPullRequests(ctx context.Context, owner string, name strin
 }
 
 func convertPullRequest(api graphqlPullRequest) types.PullRequest {
-	labels := sets.NewString()
+	labels := sets.New[string]()
 	for _, label := range api.Labels.Nodes {
 		labels.Insert(label.Name)
 	}

@@ -1,0 +1,14 @@
+pr:
+  body: |
+    hello world
+    asdasd
+
+    ```release-note
+    this change has multiple
+    lines of text, one after another,
+    going on into infinity and beyond…
+    ```
+
+changes:
+  - releaseNote: "This change has multiple lines of text, one after another, going on into infinity and beyond…"
+    type: misc

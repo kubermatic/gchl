@@ -19,17 +19,17 @@ package types
 import "k8s.io/apimachinery/pkg/util/sets"
 
 type Commit struct {
-	Hash        string
-	Title       string
-	PullRequest PullRequest
-	Author      string
+	Hash        string      `yaml:"hash"`
+	Title       string      `yaml:"title"`
+	PullRequest PullRequest `yaml:"pullRequest"`
+	Author      string      `yaml:"author"`
 }
 
 type PullRequest struct {
-	Number int
-	Title  string
-	Body   string
-	Labels sets.String
+	Number int              `yaml:"number"`
+	Title  string           `yaml:"title"`
+	Body   string           `yaml:"body"`
+	Labels sets.Set[string] `yaml:"labels"`
 }
 
 type RepositoryRefs struct {

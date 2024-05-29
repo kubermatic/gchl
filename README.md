@@ -32,6 +32,8 @@ This text will be visible in changelog
 '''
 ```
 
+You can include multiple release notes in the same block; each one needs to be a single line and begin with either `*` or `-`. Note that if you include multiple notes, they will be sorted individually and might not appear right next to each other in the generated changelog.
+
 ### Change Types
 
 By default, `gchl` reads the labels from pull requests and uses the first one that starts with `kind/` as the change's type (with the `kind/` prefix stripped). If no such label exists, the release-note block can also be annotated with the type by adding it right next to `release-note`:

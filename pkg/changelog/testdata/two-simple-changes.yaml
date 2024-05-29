@@ -1,0 +1,18 @@
+pr:
+  body: |
+    hello world
+    asdasd
+
+    ```release-note
+    the change
+    ```
+
+    ```release-note
+    another change
+    ```
+
+changes:
+  - releaseNote: "Another change"
+    type: misc
+  - releaseNote: "The change"
+    type: misc

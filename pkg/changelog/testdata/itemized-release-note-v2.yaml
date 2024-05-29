@@ -1,0 +1,18 @@
+pr:
+  body: |
+    hello world
+    asdasd
+
+    ```release-note
+    - first
+    - second
+    - last
+    ```
+
+changes:
+  - releaseNote: "First"
+    type: misc
+  - releaseNote: "Last"
+    type: misc
+  - releaseNote: "Second"
+    type: misc

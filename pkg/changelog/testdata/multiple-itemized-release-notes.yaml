@@ -1,0 +1,28 @@
+pr:
+  body: |
+    hello world
+
+    ```release-note
+    * first
+    * second
+    * last
+    ```
+
+    asdasd
+
+    ```release-note bugfix
+    * fix b
+    * fixes a
+    ```
+
+changes:
+  - releaseNote: "First"
+    type: misc
+  - releaseNote: "Fix a"
+    type: bugfix
+  - releaseNote: "Fix b"
+    type: bugfix
+  - releaseNote: "Last"
+    type: misc
+  - releaseNote: "Second"
+    type: misc

@@ -1,0 +1,12 @@
+pr:
+  body: |
+    hello world
+    asdasd
+
+    ```release-note bugfix
+    fix issue with thing
+    ```
+
+changes:
+  - releaseNote: "Fix issue with thing"
+    type: bugfix
