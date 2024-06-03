@@ -5,7 +5,7 @@ A Go-written Changelog Generator. Create Changelogs based on GitHub pull request
 ## Installation
 
 ```
-go install k8c.io/gchl
+go install k8c.io/gchl@latest
 ```
 
 ## Usage
