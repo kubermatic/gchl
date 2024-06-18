@@ -34,9 +34,9 @@ func NewMarkdownRenderer() Renderer {
 }
 
 var markdownTemplate = `
-## {{ .Version }}
+## v{{ .Version }}
 
-**GitHub release: [{{ .Version }}]({{ .RepositoryURL }}/releases/tag/{{ .Version }})**
+**GitHub release: [v{{ .Version }}]({{ .RepositoryURL }}/releases/tag/v{{ .Version }})**
 {{- $breaking := .BreakingChanges }}
 {{- if $breaking }}
 

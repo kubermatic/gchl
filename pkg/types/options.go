@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strings"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/spf13/pflag"
@@ -68,6 +69,9 @@ func (o *Options) Parse() error {
 	if _, err := semver.NewVersion(o.ForVersion); err != nil {
 		return fmt.Errorf("--for-version %q is not a valid semver: %w", o.ForVersion, err)
 	}
+
+	// ensure no matter the user preference, we're consistent in our code and templating
+	o.ForVersion = strings.TrimPrefix(o.ForVersion, "v")
 
 	if o.OutputFormat != "" && !slices.Contains(outputFormats, o.OutputFormat) {
 		return fmt.Errorf("invalid --format %q, must be one of %v", o.OutputFormat, outputFormats)
